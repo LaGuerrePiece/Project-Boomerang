@@ -3,8 +3,11 @@ pragma solidity ^0.8.0;
  
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@opengsn/contracts/src/ERC2771Recipient.sol";
+
 import "./Wormhole/ITokenBridge.sol";
 import "./Wormhole/PortalWrappedToken.sol";
+
+import "./Abacus/IOutbox.sol";
 
 import "hardhat/console.sol";
 
@@ -33,9 +36,16 @@ contract Boomerang is ERC2771Recipient {
 
     ITokenBridge token_bridge;
 
-    constructor(address forwarder, address tokenBridgeAddress) {
+    // for Abacus
+    uint32 private fujiDomain = 43113;
+    uint32 private mumbaiDomain = 80001;
+    IInterchainAccountRouter interchainRouter;
+
+
+    constructor(address forwarder, address tokenBridgeAddress, address interchainRouterAddress) {
         _setTrustedForwarder(forwarder);
-        ITokenBridge token_bridge = ITokenBridge(tokenBridgeAddress);
+        token_bridge = ITokenBridge(tokenBridgeAddress);
+        interchainRouter = IInterchainAccountRouter(interchainRouterAddress);
     }
 
     // for the bridge
@@ -53,6 +63,18 @@ contract Boomerang is ERC2771Recipient {
             IERC20(tokenToBridge).approve(token_bridge_address, amt);
         }
     }
+
+    // function to be call by the gsn relayer to send bridge + send a cross chain call
+    function boom(address to, uint256 value, bytes calldata data) public payable{
+        uint32 destChain = (fujiDomain == block.chainid) ? mumbaiDomain : fujiDomain;
+        address senderInterchainAccount = interchainRouter.getInterchainAccount(destChain, msg.sender);
+
+        // To do : bridge
+
+        // To do: send cross chain transaction
+
+    }
+
 
     fallback() external payable {
     }
