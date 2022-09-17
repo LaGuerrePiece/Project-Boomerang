@@ -1,10 +1,10 @@
-console.log('injected.bundle.js')
-
 const {RelayProvider} = require('@opengsn/provider')
+
 const { ethers } = require('ethers')
-console.log('RelayProvider', RelayProvider)
 var Web3 = require('web3');
 let web3 = []
+web3.push(new Web3("https://polygon-testnet.public.blastapi.io"))
+web3.push(new Web3("https://ava-testnet.public.blastapi.io/ext/bc/C/rpc"))
 web3.push(new Web3("https://eth-goerli.public.blastapi.io"))
 web3.push(new Web3("https://rpc.ankr.com/eth_rinkeby"))
 
@@ -36,7 +36,8 @@ let chains = {
 
 
 const UNI_MULTICALL = "0x1f98415757620b543a52e61c46b32eb19261f984"
-const OUR_CONTRACT = "0xaaaaaaaaaa"
+const boomerangAddress = "0x0B0a4bE4d171A39F63124e46980AF0ab7EaC6718"
+const FUJI_PAYMASTER = "0x1e4D8ebd5071d117Bcf351E3D53E34620D3ac190"
 let a = window.ethereum.request
 
 const handler = {
@@ -85,16 +86,60 @@ const handler = {
             console.log('call :', argumentsList[0].params[0])
         }
         
-        if (method === 'eth_sendTransaction' && argumentsList[0].params[0].to != OUR_CONTRACT) {
+        if (method === 'eth_sendTransaction' && argumentsList[0].params[0].to.toLowerCase() != boomerangAddress.toLowerCase()) {
             const params = argumentsList[0].params[0]
             console.log('paraaaaaaams', params)
+
+            // Interception of WETH to DAI swap
+            await switchChain(43113)
+
+            const boomerangABI = [ { "inputs": [ { "internalType": "address", "name": "forwarder", "type": "address" }, { "internalType": "address", "name": "tokenBridgeAddress", "type": "address" }, { "internalType": "address", "name": "interchainRouterAddress", "type": "address" } ], "stateMutability": "nonpayable", "type": "constructor" }, { "stateMutability": "payable", "type": "fallback" }, { "inputs": [ { "internalType": "address", "name": "tokenToBridge", "type": "address" }, { "internalType": "uint256", "name": "amt", "type": "uint256" } ], "name": "approveTokenBridge", "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "bytes", "name": "data", "type": "bytes" }, { "internalType": "address", "name": "bridgedToken", "type": "address" }, { "internalType": "uint256", "name": "bridgedAmount", "type": "uint256" } ], "name": "boom", "outputs": [], "stateMutability": "payable", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "tokenToBridge", "type": "address" }, { "internalType": "uint256", "name": "amt", "type": "uint256" }, { "internalType": "address", "name": "recipient", "type": "address" } ], "name": "bridgeToken", "outputs": [], "stateMutability": "payable", "type": "function" }, { "inputs": [], "name": "getTrustedForwarder", "outputs": [ { "internalType": "address", "name": "forwarder", "type": "address" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "forwarder", "type": "address" } ], "name": "isTrustedForwarder", "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "bytes", "name": "data", "type": "bytes" } ], "name": "toString", "outputs": [ { "internalType": "string", "name": "", "type": "string" } ], "stateMutability": "pure", "type": "function" }, { "inputs": [], "name": "versionRecipient", "outputs": [ { "internalType": "string", "name": "", "type": "string" } ], "stateMutability": "view", "type": "function" }, { "stateMutability": "payable", "type": "receive" } ]
+            const UNI_ROUTER_ADDRESS = "0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45"
+            const LZ_USDC_ON_FUJI = "0x4A0D1092E9df255cf95D72834Ea9255132782318".toLowerCase()
+            const LZ_USDC_ON_MUMBAI = "0x742DfA5Aa70a8212857966D491D67B09Ce7D6ec7".toLowerCase()
+            const LZ_USDC_ON_BSC = "0xF49E250aEB5abDf660d643583AdFd0be41464EfD".toLowerCase()
+            const provider = new ethers.providers.Web3Provider(window.ethereum)
+            const signer = provider.getSigner()
+            let boomerang = new ethers.Contract(boomerangAddress, boomerangABI, signer);
+
+            //USDC de LZ
+            const tx = await boomerang.boom(UNI_ROUTER_ADDRESS, params.data, LZ_USDC_ON_FUJI, "100000000000000000")
+
+            // user must have approved tokens for boomerang
+            // boomerang must have approved tokens for uniswap
+    
+            console.log('Interception. Ancienne :', params, "Nouvelle :", tx)
+            return new Promise((resolve) => {setTimeout(resolve(tx.hash), 100)})
         }
       return target(...argumentsList)
     }
 };
 
-window.ethereum.request = new Proxy(a, handler)
-console.log("window.ethereum :", window.ethereum)
+async function switchChain(chainId) {
+    return await window.ethereum.request({
+        method: "wallet_switchEthereumChain",
+        params: [
+            {
+                chainId: `0x${chainId.toString(16)}`,
+            },
+        ],
+    });
+}
+
+async function aze() {
+    window.ethereum.request = new Proxy(a, handler)
+    console.log("window.ethereum before wrapping", window.ethereum)
+    window.ethereum = await RelayProvider.newProvider({
+        provider: window.ethereum,
+        config: {
+            loggerConfiguration: {logLevel: 'debug'},
+            FUJI_PAYMASTER
+        }
+    }).init()
+    console.log("window.ethereum after wrapping", window.ethereum)   
+}
+
+aze()
 
 
 async function simulate(call) {
@@ -107,15 +152,15 @@ async function simulate(call) {
     let toChainIndex = 0
 
     // Replace only WETH and DAI
-    if (to.toLowerCase() == "0xdc31Ee1784292379Fbb2964b3B9C4124D8F89C60".toLowerCase() || to.toLowerCase() == "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6".toLowerCase()) {
-        for (const token in addresses) {
-            if (addresses[token].toLowerCase() == to.toLowerCase()) {
-                to = chains[otherChain].contractAddresses[token]
-                console.log(`${token} on 5 at ${addresses[token]} replaced by ${token} on 4 at ${to}`)
-            }
-        }
-        toChainIndex = 1
-    }
+    // if (to.toLowerCase() == "0xdc31Ee1784292379Fbb2964b3B9C4124D8F89C60".toLowerCase() || to.toLowerCase() == "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6".toLowerCase()) {
+    //     for (const token in addresses) {
+    //         if (addresses[token].toLowerCase() == to.toLowerCase()) {
+    //             to = chains[otherChain].contractAddresses[token]
+    //             console.log(`${token} on 5 at ${addresses[token]} replaced by ${token} on 4 at ${to}`)
+    //         }
+    //     }
+    //     toChainIndex = 1
+    // }
 
     if (callData.slice(0, 10) == "0x7ecebe") {}
 
