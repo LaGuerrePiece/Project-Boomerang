@@ -32,7 +32,7 @@ interface IInterchainAccountRouter {
 contract Boomerang is ERC2771Recipient {
 
     // for gsn
-    string public override versionRecipient = "3.0.0";
+    string public versionRecipient = "3.0.0";
 
     address tokenBridge;
 
@@ -59,20 +59,20 @@ contract Boomerang is ERC2771Recipient {
     }
 
     function approveTokenBridge(address tokenToBridge, uint256 amt) public returns (bool) {
-        if(IERC20(tokenToBridge).allowance(address(this), tokenBridge < amt)){
+        if(IERC20(tokenToBridge).allowance(address(this), tokenBridge) < amt){
             IERC20(tokenToBridge).approve(tokenBridge, amt);
         }
     }
 
     // function to be call by the gsn relayer to send bridge + send a cross chain call
     function boom(address to, uint256 value, bytes calldata data, address bridgedToken, uint256 bridgedAmount) public payable{
-        uint32 destChain = (fujiDomain == block.chainid) ? bscDomain : fujiDomain;
+        uint16 destChain = (fujiDomain == block.chainid) ? 4 : 6;
         address senderInterchainAccount = IInterchainAccountRouter(interchainRouter).getInterchainAccount(destChain, msg.sender);
 
         // Take user's tokens 
         IERC20(bridgedToken).transferFrom(msg.sender, address(this), bridgedAmount);
         // Bridge tokens
-        bridgedToken(bridgedToken, bridgedAmount, destChain, bytes32(uint256(uint160(senderInterchainAccount)) << 96));
+        bridgeToken(bridgedToken, bridgedAmount, destChain, bytes32(uint256(uint160(senderInterchainAccount)) << 96));
 
         // To do: send cross chain transaction
 
