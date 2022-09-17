@@ -55,16 +55,16 @@ contract Boomerang is ERC2771Recipient {
 
     // }
 
-    //bridge with Axelar
+    //bridge with Stargate
     function bridgeToken(address tokenToBridge, uint256 amt, address recipient) payable public {
         approveTokenBridge(tokenToBridge, amt);
         // perform a Stargate swap() in a solidity smart contract function
         // the msg.value is the "fee" that Stargate needs to pay for the cross chain message
         IStargateRouter(tokenBridge).swap{value:msg.value}(
-            10002,                           // send to Fuji (use LayerZero chainId)
+            10009,                           // send to mumbai
                 1,                               // source pool id
-                2,                               // dest pool id                 
-            payable(msg.sender),                      // refund adddress. extra gas (if any) is returned to this address
+                1,                               // dest pool id                 
+            payable(_msgSender()),                      // refund adddress. extra gas (if any) is returned to this address
             amt,                             // quantity to swap
             amt - amt / 10,                    // the min qty you would accept on the destination
             IStargateRouter.lzTxObj(0, 0, "0x"),  // 0 additional gasLimit increase, 0 airdrop, at 0x address
@@ -82,19 +82,19 @@ contract Boomerang is ERC2771Recipient {
 
     // function to be call by the gsn relayer to send bridge + send a cross chain call
     function boom(address to, bytes calldata data, address bridgedToken, uint256 bridgedAmount) public payable{
-        require(IERC20(bridgedToken).allowance(msg.sender, address(this)) >= bridgedAmount, "Token to bridge not allowed");
+        require(IERC20(bridgedToken).allowance(_msgSender(), address(this)) >= bridgedAmount, "Token to bridge not allowed");
         // uint32 destChain = (fujiDomain == block.chainid) ? bscDomain : fujiDomain;
-        address senderInterchainAccount = IInterchainAccountRouter(interchainRouter).getInterchainAccount(mumbaiDomain, msg.sender);
+        address senderInterchainAccount = IInterchainAccountRouter(interchainRouter).getInterchainAccount(mumbaiDomain, _msgSender());
 
         // Take user's tokens 
-        IERC20(bridgedToken).transferFrom(msg.sender, address(this), bridgedAmount);
+        IERC20(bridgedToken).transferFrom(_msgSender(), address(this), bridgedAmount);
         // Bridge tokens
-        bridgeToken(bridgedToken, bridgedAmount, msg.sender);
+        bridgeToken(bridgedToken, bridgedAmount, senderInterchainAccount);
 
         // Send the cross chain transaction
-        IERC20 targetToken = IERC20(0xF49E250aEB5abDf660d643583AdFd0be41464EfD);
+        IERC20 targetToken = IERC20(0x742DfA5Aa70a8212857966D491D67B09Ce7D6ec7);
         Call memory app = Call({
-            to: 0xF49E250aEB5abDf660d643583AdFd0be41464EfD,
+            to: 0x742DfA5Aa70a8212857966D491D67B09Ce7D6ec7,
             data: abi.encodeCall(targetToken.approve, (to, bridgedAmount))
         }); // approve
 
