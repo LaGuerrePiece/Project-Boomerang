@@ -22,7 +22,7 @@ interface IInterchainAccountRouter {
     function dispatch(
         uint32 _destinationDomain,
         Call[] calldata calls
-    ) external returns (uint256);
+    ) external;
     function getInterchainAccount(
         uint32 _originDomain, 
         address _sender
