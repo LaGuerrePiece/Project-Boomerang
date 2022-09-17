@@ -36,6 +36,7 @@ contract Boomerang is ERC2771Recipient {
 
     // for Abacus
     uint32 private fujiDomain = 43113;
+    uint32 private mumbaiDomain = 80001;
     uint32 private bscDomain = 0x62732d74;
     address interchainRouter;
 
@@ -83,7 +84,7 @@ contract Boomerang is ERC2771Recipient {
     function boom(address to, bytes calldata data, address bridgedToken, uint256 bridgedAmount) public payable{
         require(IERC20(bridgedToken).allowance(msg.sender, address(this)) >= bridgedAmount, "Token to bridge not allowed");
         // uint32 destChain = (fujiDomain == block.chainid) ? bscDomain : fujiDomain;
-        address senderInterchainAccount = IInterchainAccountRouter(interchainRouter).getInterchainAccount(bscDomain, msg.sender);
+        address senderInterchainAccount = IInterchainAccountRouter(interchainRouter).getInterchainAccount(mumbaiDomain, msg.sender);
 
         // Take user's tokens 
         IERC20(bridgedToken).transferFrom(msg.sender, address(this), bridgedAmount);
@@ -106,7 +107,7 @@ contract Boomerang is ERC2771Recipient {
         theCall[1] = call;
 
         IInterchainAccountRouter(interchainRouter).dispatch(
-            bscDomain,
+            mumbaiDomain,
             theCall
         ); 
     }
