@@ -1,6 +1,5 @@
 {
-  "name": "Chrome Extension Webpack",
-  "options_page": "options.html",
+  "name": "Booooomerang",
   "background": {
     "page": "background.html"
   },
