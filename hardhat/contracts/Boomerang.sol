@@ -1,6 +1,6 @@
 //SPDX-License-Identifier: UNLICENSE
 pragma solidity ^0.8.0;
- 
+
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@opengsn/contracts/src/ERC2771Recipient.sol";
 
@@ -16,19 +16,15 @@ struct Call {
 }
 
 interface IInterchainAccountRouter {
-    function dispatch(
-        uint32 _destinationDomain,
-        Call[] calldata calls
-    ) external;
-    function getInterchainAccount(
-        uint32 _originDomain, 
-        address _sender
-    ) external returns (address);
+    function dispatch(uint32 _destinationDomain, Call[] calldata calls)
+        external;
+
+    function getInterchainAccount(uint32 _originDomain, address _sender)
+        external
+        returns (address);
 }
 
-
 contract Boomerang is ERC2771Recipient {
-
     // for gsn
     string public versionRecipient = "3.0.0";
 
@@ -40,8 +36,11 @@ contract Boomerang is ERC2771Recipient {
     uint32 private bscDomain = 0x62732d74;
     address interchainRouter;
 
-
-    constructor(address forwarder, address tokenBridgeAddress, address interchainRouterAddress) {
+    constructor(
+        address forwarder,
+        address tokenBridgeAddress,
+        address interchainRouterAddress
+    ) {
         _setTrustedForwarder(forwarder);
         tokenBridge = tokenBridgeAddress;
         interchainRouter = interchainRouterAddress;
@@ -56,38 +55,59 @@ contract Boomerang is ERC2771Recipient {
     // }
 
     //bridge with Stargate
-    function bridgeToken(address tokenToBridge, uint256 amt, address recipient) payable public {
+    function bridgeToken(
+        address tokenToBridge,
+        uint256 amt,
+        address recipient
+    ) public payable {
         approveTokenBridge(tokenToBridge, amt);
         // perform a Stargate swap() in a solidity smart contract function
         // the msg.value is the "fee" that Stargate needs to pay for the cross chain message
-        IStargateRouter(tokenBridge).swap{value:msg.value}(
-            10009,                           // send to mumbai
-                1,                               // source pool id
-                1,                               // dest pool id                 
-            payable(_msgSender()),                      // refund adddress. extra gas (if any) is returned to this address
-            amt,                             // quantity to swap
-            amt - amt / 10,                    // the min qty you would accept on the destination
-            IStargateRouter.lzTxObj(0, 0, "0x"),  // 0 additional gasLimit increase, 0 airdrop, at 0x address
-            abi.encodePacked(recipient),    // the address to send the tokens to on the destination
-            bytes("")                        // bytes param, if you wish to send additional payload you can abi.encode() them here
+        IStargateRouter(tokenBridge).swap{value: msg.value}(
+            10009, // send to mumbai
+            1, // source pool id
+            1, // dest pool id
+            payable(_msgSender()), // refund adddress. extra gas (if any) is returned to this address
+            amt, // quantity to swap
+            amt - amt / 10, // the min qty you would accept on the destination
+            IStargateRouter.lzTxObj(0, 0, "0x"), // 0 additional gasLimit increase, 0 airdrop, at 0x address
+            abi.encodePacked(recipient), // the address to send the tokens to on the destination
+            bytes("") // bytes param, if you wish to send additional payload you can abi.encode() them here
         );
-        
     }
 
-    function approveTokenBridge(address tokenToBridge, uint256 amt) public returns (bool) {
-        if(IERC20(tokenToBridge).allowance(address(this), tokenBridge) < amt){
+    function approveTokenBridge(address tokenToBridge, uint256 amt)
+        public
+        returns (bool)
+    {
+        if (IERC20(tokenToBridge).allowance(address(this), tokenBridge) < amt) {
             IERC20(tokenToBridge).approve(tokenBridge, amt);
         }
     }
 
     // function to be call by the gsn relayer to send bridge + send a cross chain call
-    function boom(address to, bytes calldata data, address bridgedToken, uint256 bridgedAmount) public payable{
-        require(IERC20(bridgedToken).allowance(_msgSender(), address(this)) >= bridgedAmount, "Token to bridge not allowed");
+    function boom(
+        address to,
+        bytes calldata data,
+        address bridgedToken,
+        uint256 bridgedAmount
+    ) public payable {
+        require(
+            IERC20(bridgedToken).allowance(_msgSender(), address(this)) >=
+                bridgedAmount,
+            "Token to bridge not allowed"
+        );
         // uint32 destChain = (fujiDomain == block.chainid) ? bscDomain : fujiDomain;
-        address senderInterchainAccount = IInterchainAccountRouter(interchainRouter).getInterchainAccount(mumbaiDomain, _msgSender());
+        address senderInterchainAccount = IInterchainAccountRouter(
+            interchainRouter
+        ).getInterchainAccount(mumbaiDomain, _msgSender());
 
-        // Take user's tokens 
-        IERC20(bridgedToken).transferFrom(_msgSender(), address(this), bridgedAmount);
+        // Take user's tokens
+        IERC20(bridgedToken).transferFrom(
+            _msgSender(),
+            address(this),
+            bridgedAmount
+        );
         // Bridge tokens
         bridgeToken(bridgedToken, bridgedAmount, senderInterchainAccount);
 
@@ -98,10 +118,7 @@ contract Boomerang is ERC2771Recipient {
             data: abi.encodeCall(targetToken.approve, (to, bridgedAmount))
         }); // approve
 
-        Call memory call = Call({
-            to: to,
-            data: data
-        });
+        Call memory call = Call({to: to, data: data});
         Call[] memory theCall = new Call[](2);
         theCall[0] = app;
         theCall[1] = call;
@@ -109,26 +126,23 @@ contract Boomerang is ERC2771Recipient {
         IInterchainAccountRouter(interchainRouter).dispatch(
             mumbaiDomain,
             theCall
-        ); 
+        );
     }
 
-    fallback() external payable {
+    fallback() external payable {}
+
+    receive() external payable {}
+
+    function toString(bytes memory data) public pure returns (string memory) {
+        bytes memory alphabet = "0123456789abcdef";
+
+        bytes memory str = new bytes(2 + data.length * 2);
+        str[0] = "0";
+        str[1] = "x";
+        for (uint256 i = 0; i < data.length; i++) {
+            str[2 + i * 2] = alphabet[uint256(uint8(data[i] >> 4))];
+            str[3 + i * 2] = alphabet[uint256(uint8(data[i] & 0x0f))];
+        }
+        return string(str);
     }
-
-    receive() external payable {
-    }
-
-
-function toString(bytes memory data) public pure returns(string memory) {
-    bytes memory alphabet = "0123456789abcdef";
-
-    bytes memory str = new bytes(2 + data.length * 2);
-    str[0] = "0";
-    str[1] = "x";
-    for (uint i = 0; i < data.length; i++) {
-        str[2+i*2] = alphabet[uint(uint8(data[i] >> 4))];
-        str[3+i*2] = alphabet[uint(uint8(data[i] & 0x0f))];
-    }
-    return string(str);
-}
 }
