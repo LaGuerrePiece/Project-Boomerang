@@ -43,7 +43,7 @@ let a = window.ethereum.request
 const handler = {
     apply: async function(target, thisArg, argumentsList) {
         const method = argumentsList[0].method
-        // console.log('method :', method)
+        console.log('method :', method)
 
       if (method === "eth_call" && argumentsList[0].params[0].to.toLowerCase() == UNI_MULTICALL) {
         console.log('eth_call to uni_multicall')
@@ -55,11 +55,13 @@ const handler = {
         } else if (calldata.slice(0, 10) == "0x4d2301cc") {
             const decodedCall = ethers.utils.defaultAbiCoder.decode("address", "0x" + calldata.slice(10))[0]
             // console.log("decodedCall", decodedCall)
-            let res = await simulate(decodedCall)
+            // let res = await simulate(decodedCall)
+            return target(...argumentsList)
             const encodedResponse = ethers.utils.defaultAbiCoder.encode("uint256", res)
             // console.log("encodedResponse", encodedResponse)
             return encodedResponse
         } else {
+            return target(...argumentsList)
             if (calldata.length > 2000) return new Promise(function(resolve) {setTimeout(resolve, 100000)});
             let decodedCalls = ethers.utils.defaultAbiCoder.decode([ "tuple(address, uint256, bytes)[]" ], "0x" + calldata.slice(10))[0]
             console.log(decodedCalls)
@@ -91,14 +93,24 @@ const handler = {
             console.log('paraaaaaaams', params)
 
             // Interception of WETH to DAI swap
-            await switchChain(43113)
+            // await switchChain(43113)
 
             const boomerangABI = [ { "inputs": [ { "internalType": "address", "name": "forwarder", "type": "address" }, { "internalType": "address", "name": "tokenBridgeAddress", "type": "address" }, { "internalType": "address", "name": "interchainRouterAddress", "type": "address" } ], "stateMutability": "nonpayable", "type": "constructor" }, { "stateMutability": "payable", "type": "fallback" }, { "inputs": [ { "internalType": "address", "name": "tokenToBridge", "type": "address" }, { "internalType": "uint256", "name": "amt", "type": "uint256" } ], "name": "approveTokenBridge", "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "bytes", "name": "data", "type": "bytes" }, { "internalType": "address", "name": "bridgedToken", "type": "address" }, { "internalType": "uint256", "name": "bridgedAmount", "type": "uint256" } ], "name": "boom", "outputs": [], "stateMutability": "payable", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "tokenToBridge", "type": "address" }, { "internalType": "uint256", "name": "amt", "type": "uint256" }, { "internalType": "address", "name": "recipient", "type": "address" } ], "name": "bridgeToken", "outputs": [], "stateMutability": "payable", "type": "function" }, { "inputs": [], "name": "getTrustedForwarder", "outputs": [ { "internalType": "address", "name": "forwarder", "type": "address" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "forwarder", "type": "address" } ], "name": "isTrustedForwarder", "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "bytes", "name": "data", "type": "bytes" } ], "name": "toString", "outputs": [ { "internalType": "string", "name": "", "type": "string" } ], "stateMutability": "pure", "type": "function" }, { "inputs": [], "name": "versionRecipient", "outputs": [ { "internalType": "string", "name": "", "type": "string" } ], "stateMutability": "view", "type": "function" }, { "stateMutability": "payable", "type": "receive" } ]
             const UNI_ROUTER_ADDRESS = "0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45"
             const LZ_USDC_ON_FUJI = "0x4A0D1092E9df255cf95D72834Ea9255132782318".toLowerCase()
             const LZ_USDC_ON_MUMBAI = "0x742DfA5Aa70a8212857966D491D67B09Ce7D6ec7".toLowerCase()
             const LZ_USDC_ON_BSC = "0xF49E250aEB5abDf660d643583AdFd0be41464EfD".toLowerCase()
-            const provider = new ethers.providers.Web3Provider(window.ethereum)
+            let providerModified = window.ethereum
+            providerModified.chainId = "0xa869"
+            const wrappedProvider = await RelayProvider.newProvider({
+                provider: providerModified,
+                config: {
+                    loggerConfiguration: {logLevel: 'debug'},
+                    FUJI_PAYMASTER
+                }
+            }).init()
+            const provider = new ethers.providers.Web3Provider(wrappedProvider)
+
             const signer = provider.getSigner()
             let boomerang = new ethers.Contract(boomerangAddress, boomerangABI, signer);
 
@@ -115,6 +127,9 @@ const handler = {
     }
 };
 
+window.ethereum.request = new Proxy(a, handler)
+console.log("window.ethereum", window.ethereum)
+
 async function switchChain(chainId) {
     return await window.ethereum.request({
         method: "wallet_switchEthereumChain",
@@ -125,22 +140,6 @@ async function switchChain(chainId) {
         ],
     });
 }
-
-async function aze() {
-    window.ethereum.request = new Proxy(a, handler)
-    console.log("window.ethereum before wrapping", window.ethereum)
-    window.ethereum = await RelayProvider.newProvider({
-        provider: window.ethereum,
-        config: {
-            loggerConfiguration: {logLevel: 'debug'},
-            FUJI_PAYMASTER
-        }
-    }).init()
-    console.log("window.ethereum after wrapping", window.ethereum)   
-}
-
-aze()
-
 
 async function simulate(call) {
     const currentChain = 5
