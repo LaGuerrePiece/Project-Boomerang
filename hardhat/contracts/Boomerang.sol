@@ -34,18 +34,18 @@ contract Boomerang is ERC2771Recipient {
     // for gsn
     string public override versionRecipient = "3.0.0";
 
-    ITokenBridge token_bridge;
+    address tokenBridge;
 
     // for Abacus
     uint32 private fujiDomain = 43113;
     uint32 private bscDomain = 0x627363;
-    IInterchainAccountRouter interchainRouter;
+    address interchainRouter;
 
 
     constructor(address forwarder, address tokenBridgeAddress, address interchainRouterAddress) {
         _setTrustedForwarder(forwarder);
-        token_bridge = ITokenBridge(tokenBridgeAddress);
-        interchainRouter = IInterchainAccountRouter(interchainRouterAddress);
+        tokenBridge = tokenBridgeAddress;
+        interchainRouter = interchainRouterAddress;
     }
 
     // for the bridge
@@ -55,19 +55,19 @@ contract Boomerang is ERC2771Recipient {
     function bridgeToken(address tokenToBridge, uint256 amt, uint16 receipientChainId, bytes32 recipient) public returns (uint64 sequence) {
         approveTokenBridge(tokenToBridge, amt);
         nonce += 1;
-        return token_bridge.transferTokens(TKN_address, amt, receipientChainId, recipient, 0, nonce);
+        return ITokenBridge(tokenBridge).transferTokens(tokenToBridge, amt, receipientChainId, recipient, 0, nonce);
     }
 
     function approveTokenBridge(address tokenToBridge, uint256 amt) public returns (bool) {
-        if(IERC20(tokenToBridge).allowance(address(this), token_bridge_address < amt)){
-            IERC20(tokenToBridge).approve(token_bridge_address, amt);
+        if(IERC20(tokenToBridge).allowance(address(this), tokenBridge < amt)){
+            IERC20(tokenToBridge).approve(tokenBridge, amt);
         }
     }
 
     // function to be call by the gsn relayer to send bridge + send a cross chain call
     function boom(address to, uint256 value, bytes calldata data, address bridgedToken, uint256 bridgedAmount) public payable{
-        uint32 destChain = (fujiDomain == block.chainid) ? mumbaiDomain : fujiDomain;
-        address senderInterchainAccount = interchainRouter.getInterchainAccount(destChain, msg.sender);
+        uint32 destChain = (fujiDomain == block.chainid) ? bscDomain : fujiDomain;
+        address senderInterchainAccount = IInterchainAccountRouter(interchainRouter).getInterchainAccount(destChain, msg.sender);
 
         // Take user's tokens 
         IERC20(bridgedToken).transferFrom(msg.sender, address(this), bridgedAmount);
