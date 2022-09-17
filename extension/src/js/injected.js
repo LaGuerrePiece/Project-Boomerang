@@ -3,28 +3,16 @@ console.log('injected.bundle.js')
 const {RelayProvider} = require('@opengsn/provider')
 const { ethers } = require('ethers')
 console.log('RelayProvider', RelayProvider)
-let Web3 = require('web3');
-let web3 = new Web3()
 
 
 const UNI_MULTICALL = "0x1f98415757620b543a52e61c46b32eb19261f984"
 const OUR_CONTRACT = "0xaaaaaaaaaa"
 let a = window.ethereum.request
 
-// let multicallAbi = [{"inputs":[],"name":"getCurrentBlockTimestamp","outputs":[{"internalType":"uint256","name":"timestamp","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"addr","type":"address"}],"name":"getEthBalance","outputs":[{"internalType":"uint256","name":"balance","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"components":[{"internalType":"address","name":"target","type":"address"},{"internalType":"uint256","name":"gasLimit","type":"uint256"},{"internalType":"bytes","name":"callData","type":"bytes"}],"internalType":"struct UniswapInterfaceMulticall.Call[]","name":"calls","type":"tuple[]"}],"name":"multicall","outputs":[{"internalType":"uint256","name":"blockNumber","type":"uint256"},{"components":[{"internalType":"bool","name":"success","type":"bool"},{"internalType":"uint256","name":"gasUsed","type":"uint256"},{"internalType":"bytes","name":"returnData","type":"bytes"}],"internalType":"struct UniswapInterfaceMulticall.Result[]","name":"returnData","type":"tuple[]"}],"stateMutability":"nonpayable","type":"function"}]
-// let iface = new ethers.utils.Interface(multicallAbi)
-// const FormatTypes = ethers.utils.FormatTypes;
-// console.log("iface", iface.format(FormatTypes.full))
-
-// let example = iface.encodeFunctionData("getEthBalance", ["0x86c01DD169aE6f3523D1919cc46bc224E733127F"]);
-// console.log("example", example)
-
-
 const handler = {
     apply: async function(target, thisArg, argumentsList) {
         const method = argumentsList[0].method
         // console.log('method :', method)
-        // console.log('argumentsList :', argumentsList)
 
       if (method === "eth_call" && argumentsList[0].params[0].to.toLowerCase() == UNI_MULTICALL) {
         console.log('eth_call to uni_multicall')
@@ -41,24 +29,11 @@ const handler = {
             // console.log("encodedResponse", encodedResponse)
             return encodedResponse
         } else {
-            //
-            // let multicallAbi = [{"inputs":[],"name":"getCurrentBlockTimestamp","outputs":[{"internalType":"uint256","name":"timestamp","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"addr","type":"address"}],"name":"getEthBalance","outputs":[{"internalType":"uint256","name":"balance","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"components":[{"internalType":"address","name":"target","type":"address"},{"internalType":"uint256","name":"gasLimit","type":"uint256"},{"internalType":"bytes","name":"callData","type":"bytes"}],"internalType":"struct UniswapInterfaceMulticall.Call[]","name":"calls","type":"tuple[]"}],"name":"multicall","outputs":[{"internalType":"uint256","name":"blockNumber","type":"uint256"},{"components":[{"internalType":"bool","name":"success","type":"bool"},{"internalType":"uint256","name":"gasUsed","type":"uint256"},{"internalType":"bytes","name":"returnData","type":"bytes"}],"internalType":"struct UniswapInterfaceMulticall.Result[]","name":"returnData","type":"tuple[]"}],"stateMutability":"nonpayable","type":"function"}]
-            // let iface = new ethers.utils.Interface(multicallAbi)
-            // let decodedCalls = iface.decodeFunctionData("multicall", calldata)[0];
-            // // console.log("example", example)
             if (calldata.length > 2000) return new Promise(function(resolve) {setTimeout(resolve, 100000)});
-
-
             const decodedCalls = ethers.utils.defaultAbiCoder.decode([ "tuple(address, uint256, bytes)[]" ], "0x" + calldata.slice(10))[0]
-            
-            
-            // web3.eth.abi.decodeFunctionCall({"inputs":[{"components":[{"internalType":"address","name":"target","type":"address"},{"internalType":"uint256","name":"gasLimit","type":"uint256"},{"internalType":"bytes","name":"callData","type":"bytes"}],"internalType":"struct UniswapInterfaceMulticall.Call[]","name":"calls","type":"tuple[]"}],"name":"multicall","outputs":[{"internalType":"uint256","name":"blockNumber","type":"uint256"},{"components":[{"internalType":"bool","name":"success","type":"bool"},{"internalType":"uint256","name":"gasUsed","type":"uint256"},{"internalType":"bytes","name":"returnData","type":"bytes"}],"internalType":"struct UniswapInterfaceMulticall.Result[]","name":"returnData","type":"tuple[]"}],"stateMutability":"nonpayable","type":"function"},
-            // ['2345675643', 'Hello!%']);
-            
             console.log(decodedCalls)
             let responseFull = [ethers.BigNumber.from(await getBlockNumber())]
             let responseArray = []
-            
             await Promise.all(decodedCalls.map(async (call) => {
                 try {
                     let res = await simulate(call)
@@ -68,27 +43,12 @@ const handler = {
                 }
             }))
             responseFull.push(responseArray)
-            // console.log("responseFull", responseFull)
-
             const encodedResponse = ethers.utils.defaultAbiCoder.encode([ "uint256", "tuple(bool, uint256, bytes)[]" ], responseFull)
             // console.log("encodedResponse :", encodedResponse)
             // console.log("normal response :", await target(...argumentsList))
             return encodedResponse
-
-            // return target(...argumentsList)
-            
-            
-            // return response
-            // return simulate(decodedCalls)
-            // decodedCalldata.forEach(call => {
-                //   if (call[2].slice(0, 10).toLowerCase() === "0x70a08231") { // selectooor for balanceOf
-                //     callsThatAskForBalance.push(call[2])
-                //   }
-                // })
-                
-                
-                //0x7ecebe : selector for allowance
-                //Multicall => unique call => custom call => result => construct reasonable result object => encode =>
+            //0x7ecebe : selector for allowance
+            //Multicall => unique call => custom call => result => construct reasonable result object => encode =>
             }
         } else if (method === "eth_call" && argumentsList[0].params[0].to.toLowerCase() != "0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e") {
             console.log('eth_call to another address')
@@ -119,8 +79,6 @@ async function simulate(call) {
     })
     return rq
 } 
-
-
 
 async function test() {
 
