@@ -13,9 +13,7 @@ async function main() {
 
 
   IERC20_ABI = [{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"}]
-  const account = (await hre.ethers.getSigners())[0];
-
-  const wavax = new hre.ethers.Contract("0xd00ae08403B9bbb9124bB305C09058E32C39A48c", IERC20_ABI, account);
+  const wavax = new hre.ethers.Contract("0xd00ae08403B9bbb9124bB305C09058E32C39A48c", IERC20_ABI, (await hre.ethers.getSigners())[0]);
   await wavax.approve(boomerang.address, "10000000000000000000000000");
   console.log("Approved boomerang contract to spend our wavax tokens");
 
