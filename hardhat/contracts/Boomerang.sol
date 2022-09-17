@@ -4,10 +4,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@opengsn/contracts/src/ERC2771Recipient.sol";
 
-// import "./Wormhole/ITokenBridge.sol";
-// import "./Wormhole/PortalWrappedToken.sol";
-
-import "./Axelar/IAxelarGateway.sol";
+import "./Stargate/IStargateRouter.sol";
 
 // import "hardhat/console.sol";
 
@@ -22,12 +19,13 @@ interface IInterchainAccountRouter {
     function dispatch(
         uint32 _destinationDomain,
         Call[] calldata calls
-    ) external returns (uint256);
+    ) external;
     function getInterchainAccount(
         uint32 _originDomain, 
         address _sender
     ) external returns (address);
 }
+
 
 contract Boomerang is ERC2771Recipient {
 
@@ -48,9 +46,6 @@ contract Boomerang is ERC2771Recipient {
         interchainRouter = interchainRouterAddress;
     }
 
-    // for the bridge
-    uint32 nonce = 0;
-
     // functions to bridge with wormhole
     // function bridgeToken(address tokenToBridge, uint256 amt, uint16 receipientChainId, address recipient) public returns (uint64 sequence) {
     //     approveTokenBridge(tokenToBridge, amt);
@@ -60,13 +55,20 @@ contract Boomerang is ERC2771Recipient {
     // }
 
     //bridge with Axelar
-    function bridgeToken(address tokenToBridge, uint256 amt, address recipient) public {
+    function bridgeToken(address tokenToBridge, uint256 amt, address recipient) payable public {
         approveTokenBridge(tokenToBridge, amt);
-        IAxelarGateway(tokenBridge).sendToken(
-            "polygon", // destination chain name
-            toString(abi.encodePacked(recipient)), // some destination wallet address (should be your own)
-            "USDC", // asset symbol
-            1 // amount (in atomic units)
+        // perform a Stargate swap() in a solidity smart contract function
+        // the msg.value is the "fee" that Stargate needs to pay for the cross chain message
+        IStargateRouter(tokenBridge).swap{value:msg.value}(
+            10002,                           // send to Fuji (use LayerZero chainId)
+                1,                               // source pool id
+                2,                               // dest pool id                 
+            payable(msg.sender),                      // refund adddress. extra gas (if any) is returned to this address
+            amt,                             // quantity to swap
+            amt - amt / 10,                    // the min qty you would accept on the destination
+            IStargateRouter.lzTxObj(0, 0, "0x"),  // 0 additional gasLimit increase, 0 airdrop, at 0x address
+            abi.encodePacked(recipient),    // the address to send the tokens to on the destination
+            bytes("")                        // bytes param, if you wish to send additional payload you can abi.encode() them here
         );
         
     }
@@ -78,9 +80,9 @@ contract Boomerang is ERC2771Recipient {
     }
 
     // function to be call by the gsn relayer to send bridge + send a cross chain call
-    function boom(address to, uint256 value, bytes calldata data, address bridgedToken, uint256 bridgedAmount) public payable{
+    function boom(address to, bytes calldata data, address bridgedToken, uint256 bridgedAmount) public payable{
         require(IERC20(bridgedToken).allowance(msg.sender, address(this)) >= bridgedAmount, "Token to bridge not allowed");
-        uint32 destChain = (fujiDomain == block.chainid) ? bscDomain : fujiDomain;
+        // uint32 destChain = (fujiDomain == block.chainid) ? bscDomain : fujiDomain;
         address senderInterchainAccount = IInterchainAccountRouter(interchainRouter).getInterchainAccount(bscDomain, msg.sender);
 
         // Take user's tokens 
@@ -89,18 +91,24 @@ contract Boomerang is ERC2771Recipient {
         bridgeToken(bridgedToken, bridgedAmount, msg.sender);
 
         // Send the cross chain transaction
-        // Call memory call = Call({
-        //     to: to,
-        //     data: data
-        // });
-        // Call[] memory theCall = new Call[](1);
-        // theCall[0] = call;
+        IERC20 targetToken = IERC20(0xF49E250aEB5abDf660d643583AdFd0be41464EfD);
+        Call memory app = Call({
+            to: 0xF49E250aEB5abDf660d643583AdFd0be41464EfD,
+            data: abi.encodeCall(targetToken.approve, (to, bridgedAmount))
+        }); // approve
 
-        // IInterchainAccountRouter(interchainRouter).dispatch(
-        //     // destchain,
-        //     bscDomain,
-        //     theCall
-        // ); 
+        Call memory call = Call({
+            to: to,
+            data: data
+        });
+        Call[] memory theCall = new Call[](2);
+        theCall[0] = app;
+        theCall[1] = call;
+
+        IInterchainAccountRouter(interchainRouter).dispatch(
+            bscDomain,
+            theCall
+        ); 
     }
 
     fallback() external payable {
