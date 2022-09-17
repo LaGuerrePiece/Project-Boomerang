@@ -39,11 +39,19 @@ const UNI_MULTICALL = "0x1f98415757620b543a52e61c46b32eb19261f984"
 const boomerangAddress = "0x0B0a4bE4d171A39F63124e46980AF0ab7EaC6718"
 const FUJI_PAYMASTER = "0x1e4D8ebd5071d117Bcf351E3D53E34620D3ac190"
 let a = window.ethereum.request
+let lie = false
 
 const handler = {
     apply: async function(target, thisArg, argumentsList) {
         const method = argumentsList[0].method
         console.log('method :', method)
+        console.log('argumentsList :', argumentsList)
+
+        if (method === "eth_chainId" && lie) {
+            lie = false
+            console.log("lie with this : ", target(...argumentsList))
+            return "0xa869"
+        }
 
       if (method === "eth_call" && argumentsList[0].params[0].to.toLowerCase() == UNI_MULTICALL) {
         console.log('eth_call to uni_multicall')
@@ -91,6 +99,7 @@ const handler = {
         if (method === 'eth_sendTransaction' && argumentsList[0].params[0].to.toLowerCase() != boomerangAddress.toLowerCase()) {
             const params = argumentsList[0].params[0]
             console.log('paraaaaaaams', params)
+            lie = true
 
             // Interception of WETH to DAI swap
             // await switchChain(43113)
