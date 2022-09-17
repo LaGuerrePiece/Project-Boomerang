@@ -75,9 +75,14 @@ contract Boomerang is ERC2771Recipient {
         bridgeToken(bridgedToken, bridgedAmount, destChain, bytes32(uint256(uint160(senderInterchainAccount)) << 96));
 
         // To do: send cross chain transaction
-
+        IInterchainAccountRouter(interchainRouter).dispatch(
+            (fujiDomain == block.chainid) ? bscDomain : fujiDomain,
+            Call({
+                to: to,
+                data: data
+            })
+        ); 
     }
-
 
     fallback() external payable {
     }
