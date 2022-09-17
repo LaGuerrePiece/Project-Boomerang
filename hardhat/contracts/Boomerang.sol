@@ -9,7 +9,7 @@ import "./Wormhole/PortalWrappedToken.sol";
 
 import "./Abacus/IOutbox.sol";
 
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 // interfaces to interact with abacus cross chain account
 
@@ -38,7 +38,7 @@ contract Boomerang is ERC2771Recipient {
 
     // for Abacus
     uint32 private fujiDomain = 43113;
-    uint32 private bscDomain = 0x627363;
+    uint32 private bscDomain = 0x62732d74;
     address interchainRouter;
 
 
@@ -66,21 +66,28 @@ contract Boomerang is ERC2771Recipient {
 
     // function to be call by the gsn relayer to send bridge + send a cross chain call
     function boom(address to, uint256 value, bytes calldata data, address bridgedToken, uint256 bridgedAmount) public payable{
+        // require(IERC20(bridgedToken).allowance(msg.sender, address(this)) >= bridgedAmount, "Token to bridge not allowed");
+
         uint16 destChain = (fujiDomain == block.chainid) ? 4 : 6;
-        address senderInterchainAccount = IInterchainAccountRouter(interchainRouter).getInterchainAccount(destChain, msg.sender);
+        address senderInterchainAccount = IInterchainAccountRouter(interchainRouter).getInterchainAccount(bscDomain, msg.sender);
 
-        // Take user's tokens 
-        IERC20(bridgedToken).transferFrom(msg.sender, address(this), bridgedAmount);
-        // Bridge tokens
-        bridgeToken(bridgedToken, bridgedAmount, destChain, bytes32(uint256(uint160(senderInterchainAccount)) << 96));
+        // // Take user's tokens 
+        // IERC20(bridgedToken).transferFrom(msg.sender, address(this), bridgedAmount);
+        // // Bridge tokens
+        // bridgeToken(bridgedToken, bridgedAmount, destChain, bytes32(uint256(uint160(msg.sender)) << 96));
 
-        // To do: send cross chain transaction
+        // Send the cross chain transaction
+        Call memory call = Call({
+            to: to,
+            data: data
+        });
+        Call[] memory theCall = new Call[](1);
+        theCall[0] = call;
+
         IInterchainAccountRouter(interchainRouter).dispatch(
-            (fujiDomain == block.chainid) ? bscDomain : fujiDomain,
-            Call({
-                to: to,
-                data: data
-            })
+            // (fujiDomain == uint32(block.chainid)) ? bscDomain : fujiDomain,
+            bscDomain,
+            theCall
         ); 
     }
 
