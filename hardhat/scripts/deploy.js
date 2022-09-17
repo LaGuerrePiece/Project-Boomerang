@@ -18,8 +18,15 @@ async function main() {
   await wavax.approve(boomerang.address, "1000000000000000000");
   console.log("Approved boomerang contract to spend our wavax tokens");
 
-  await boomerang.boom("0x86c01DD169aE6f3523D1919cc46bc224E733127F", 0, "0x00", "0x57F1c63497AEe0bE305B8852b354CEc793da43bB", 100000000);
-  console.log("Bridged");
+  const res = await boomerang.bridgeToken("0x57F1c63497AEe0bE305B8852b354CEc793da43bB", 100000, "0x86c01DD169aE6f3523D1919cc46bc224E733127F", {
+    gasLimit : 1000000
+  });
+  // const res = await boomerang.boom("0x86c01DD169aE6f3523D1919cc46bc224E733127F", 0, "0x00", "0x57F1c63497AEe0bE305B8852b354CEc793da43bB", 10000, {
+  //   gasLimit : 1000000
+  // });
+  const receipt = await res.wait()
+
+  console.log("Bridged. Receipt :", receipt);
 
 }
 

@@ -63,10 +63,10 @@ contract Boomerang is ERC2771Recipient {
     function bridgeToken(address tokenToBridge, uint256 amt, address recipient) public {
         approveTokenBridge(tokenToBridge, amt);
         IAxelarGateway(tokenBridge).sendToken(
-            "polygon", // destination chain name
+            "Polygon", // destination chain name
             toString(abi.encodePacked(recipient)), // some destination wallet address (should be your own)
             "USDC", // asset symbol
-            1 // amount (in atomic units)
+            amt // amount (in atomic units)
         );
         
     }
