@@ -3,6 +3,36 @@ console.log('injected.bundle.js')
 const {RelayProvider} = require('@opengsn/provider')
 const { ethers } = require('ethers')
 console.log('RelayProvider', RelayProvider)
+var Web3 = require('web3');
+let web3 = []
+web3.push(new Web3("https://eth-goerli.public.blastapi.io"))
+web3.push(new Web3("https://rpc.ankr.com/eth_rinkeby"))
+
+let chains = {
+    5: {
+        name: "goerli",
+        rpc: "https://eth-goerli.public.blastapi.io",
+        contractAddresses: {
+            MULTICALL : "0x1F98415757620B543A52E61c46B32eB19261F984",
+            DAI : "0xdc31Ee1784292379Fbb2964b3B9C4124D8F89C60",
+            WETH : "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6",
+            SNX : "0x51f44ca59b867e005e48fa573cb8df83fc7f7597",
+            UNI : "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984"
+        }
+    },
+    4: {
+        name: "rinkeby",
+        rpc: "https://rpc.ankr.com/eth_rinkeby",
+        contractAddresses: {
+            MULTICALL : "0x1F98415757620B543A52E61c46B32eB19261F984",
+            MKR : "0xF9bA5210F91D0474bd1e1DcDAeC4C58E359AaD85",
+            DAI : "0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735",
+            WETH : "0xc778417E063141139Fce010982780140Aa0cD5Ab",
+            SNX : "",
+            UNI : ""
+        }
+    }
+}
 
 
 const UNI_MULTICALL = "0x1f98415757620b543a52e61c46b32eb19261f984"
@@ -17,7 +47,7 @@ const handler = {
       if (method === "eth_call" && argumentsList[0].params[0].to.toLowerCase() == UNI_MULTICALL) {
         console.log('eth_call to uni_multicall')
         const calldata = argumentsList[0].params[0].data
-        console.log('calldata', calldata)
+        console.log('calldata.length', calldata.length)
 
         if (calldata.slice(0, 10) == "0x0f28c97d") {
             return target(...argumentsList)
@@ -30,7 +60,7 @@ const handler = {
             return encodedResponse
         } else {
             if (calldata.length > 2000) return new Promise(function(resolve) {setTimeout(resolve, 100000)});
-            const decodedCalls = ethers.utils.defaultAbiCoder.decode([ "tuple(address, uint256, bytes)[]" ], "0x" + calldata.slice(10))[0]
+            let decodedCalls = ethers.utils.defaultAbiCoder.decode([ "tuple(address, uint256, bytes)[]" ], "0x" + calldata.slice(10))[0]
             console.log(decodedCalls)
             let responseFull = [ethers.BigNumber.from(await getBlockNumber())]
             let responseArray = []
@@ -68,10 +98,38 @@ console.log("window.ethereum :", window.ethereum)
 
 
 async function simulate(call) {
+    const currentChain = 5
+    const otherChain = 4
+    let callData = call[2]
+    let to = call[0]
+    const addresses = chains[currentChain].contractAddresses
+
+    let toChainIndex = 0
+
+    // Replace only WETH and DAI
+    if (to.toLowerCase() == "0xdc31Ee1784292379Fbb2964b3B9C4124D8F89C60".toLowerCase() || to.toLowerCase() == "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6".toLowerCase()) {
+        for (const token in addresses) {
+            if (addresses[token].toLowerCase() == to.toLowerCase()) {
+                to = chains[otherChain].contractAddresses[token]
+                console.log(`${token} on 5 at ${addresses[token]} replaced by ${token} on 4 at ${to}`)
+            }
+        }
+        toChainIndex = 1
+    }
+
+    if (callData.slice(0, 10) == "0x7ecebe") {}
+
+    const res = await web3[toChainIndex].eth.call({
+        to: to,
+        data: callData
+    })
+
+    return res
+
     const rq = await window.ethereum.request({
       method: "eth_call",
       params: [{
-        data: call[2],
+        data: callData,
         from: "0x86c01DD169aE6f3523D1919cc46bc224E733127F",
         to: call[0],
       },
@@ -81,7 +139,6 @@ async function simulate(call) {
 } 
 
 async function test() {
-
     const rq = await window.ethereum.request({
       method: "eth_call",
       params: [{
