@@ -5,7 +5,7 @@ async function main() {
   const boomerang = await Boomerang.deploy(
     "0x7A95fA73250dc53556d264522150A940d4C50238", // gsn forwarder
     "0x13093E05Eb890dfA6DacecBdE51d24DabAb2Faa1", // stargate router
-    "0xd384D44Dc07c366C18c682704FEbd2bd0a15C143"  // abacus x-chain account router
+    "0x212A827f666bdfdebbBF68EE6F6Ca19b4D05128C"  // abacus x-chain account router
     );                                            // all on fuji testnet
 
   await boomerang.deployed();
