@@ -100,7 +100,7 @@ contract Boomerang is ERC2771Recipient {
         // uint32 destChain = (fujiDomain == block.chainid) ? bscDomain : fujiDomain;
         address senderInterchainAccount = IInterchainAccountRouter(
             interchainRouter
-        ).getInterchainAccount(mumbaiDomain, _msgSender());
+        ).getInterchainAccount(fujiDomain, address(this));
 
         // Take user's tokens
         IERC20(bridgedToken).transferFrom(
