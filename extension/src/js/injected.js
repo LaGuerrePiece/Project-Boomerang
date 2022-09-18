@@ -34,7 +34,7 @@ let chains = {
 }
 
 const UNI_MULTICALL = "0x1f98415757620b543a52e61c46b32eb19261f984"
-const boomerangAddress = "0x96B6B54C53Fc30B80Ee99eCe47DC583755e3fB6F"
+const boomerangAddress = "0xB362974139F31218bc1Faf4be8cFD82C4B4b03a7"
 
 let a = window.ethereum.request
 
@@ -99,14 +99,15 @@ const handler = {
             const boomerangABI = [ { "inputs": [ { "internalType": "address", "name": "forwarder", "type": "address" }, { "internalType": "address", "name": "tokenBridgeAddress", "type": "address" }, { "internalType": "address", "name": "interchainRouterAddress", "type": "address" } ], "stateMutability": "nonpayable", "type": "constructor" }, { "stateMutability": "payable", "type": "fallback" }, { "inputs": [ { "internalType": "address", "name": "tokenToBridge", "type": "address" }, { "internalType": "uint256", "name": "amt", "type": "uint256" } ], "name": "approveTokenBridge", "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "bytes", "name": "data", "type": "bytes" }, { "internalType": "address", "name": "bridgedToken", "type": "address" }, { "internalType": "uint256", "name": "bridgedAmount", "type": "uint256" } ], "name": "boom", "outputs": [], "stateMutability": "payable", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "tokenToBridge", "type": "address" }, { "internalType": "uint256", "name": "amt", "type": "uint256" }, { "internalType": "address", "name": "recipient", "type": "address" } ], "name": "bridgeToken", "outputs": [], "stateMutability": "payable", "type": "function" }, { "inputs": [], "name": "getTrustedForwarder", "outputs": [ { "internalType": "address", "name": "forwarder", "type": "address" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "forwarder", "type": "address" } ], "name": "isTrustedForwarder", "outputs": [ { "internalType": "bool", "name": "", "type": "bool" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "bytes", "name": "data", "type": "bytes" } ], "name": "toString", "outputs": [ { "internalType": "string", "name": "", "type": "string" } ], "stateMutability": "pure", "type": "function" }, { "inputs": [], "name": "versionRecipient", "outputs": [ { "internalType": "string", "name": "", "type": "string" } ], "stateMutability": "view", "type": "function" }, { "stateMutability": "payable", "type": "receive" } ]
             const UNI_ROUTER_ADDRESS = "0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45"
             const LZ_USDC_ON_FUJI = "0x4A0D1092E9df255cf95D72834Ea9255132782318".toLowerCase()
-            const LZ_USDC_ON_MUMBAI = "0x742DfA5Aa70a8212857966D491D67B09Ce7D6ec7".toLowerCase()
+            //const LZ_USDC_ON_MUMBAI = "0x742DfA5Aa70a8212857966D491D67B09Ce7D6ec7".toLowerCase()
             const provider = new ethers.providers.Web3Provider(window.ethereum)
 
             const signer = provider.getSigner()
             let boomerang = new ethers.Contract(boomerangAddress, boomerangABI, signer);
 
+            const testCalldata = "0x5ae401dc000000000000000000000000000000000000000000000000000000006326997c00000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000e404e45aaf000000000000000000000000742dfa5aa70a8212857966d491d67b09ce7d6ec7000000000000000000000000a6fa4fb5f76172d178d61b04b0ecd319c5d1c0aa00000000000000000000000000000000000000000000000000000000000001f400000000000000000000000086c01dd169ae6f3523d1919cc46bc224e733127f00000000000000000000000000000000000000000000000000000000000000640000000000000000000000000000000000000000000000000000000f5cc63b7c000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
             // SWAP : 1 LZ_USDC => WETH
-            const tx = await boomerang.boom(UNI_ROUTER_ADDRESS, params.data, LZ_USDC_ON_FUJI, "12300000", {
+            const tx = await boomerang.boom(UNI_ROUTER_ADDRESS, testCalldata, LZ_USDC_ON_FUJI, "12300000", {
                 value : "300000000000000000"
             })
 
@@ -190,6 +191,22 @@ async function spoof(call) {
     })
     return rq
 }
+
+async function TEST() {
+    const rq = await window.ethereum.request({
+        method: "eth_call",
+        params: [{
+          data: "0x70a0823100000000000000000000000086c01dd169ae6f3523d1919cc46bc224e733127f",
+          from: "0x86c01DD169aE6f3523D1919cc46bc224E733127F",
+          to: "0x742DfA5Aa70a8212857966D491D67B09Ce7D6ec7",
+        },
+        "latest"]
+      })
+    console.log('TEST', rq)
+    return rq
+}
+
+TEST()
 
 async function getBlockNumber() {
     return await window.ethereum.request({
