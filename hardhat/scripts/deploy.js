@@ -20,7 +20,7 @@ async function main() {
   await tx.wait();
   console.log("Approved boomerang contract to spend our usdc tokens");
 
-  await boomerang.boom("0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45", "0x095ea7b300000000000000000000000068b3465833fb72a70ecdf485e0e4c7bd8665fc45ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", usdc, "100000000", {value : "300000000000000000"});
+  await boomerang.boom("0x86c01DD169aE6f3523D1919cc46bc224E733127F", "0x00", usdc, "100000000", {value : "300000000000000000"});
   // console.log("Bridged");
 
 }
