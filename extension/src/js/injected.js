@@ -51,13 +51,14 @@ const handler = {
             console.log('eth_call to uni_multicall. Calldata length :', calldata.length)
         
             if (calldata.slice(0, 10).toLowerCase() == "0x4d2301cc") { //getEthBalance
-                const decodedCall = ethers.utils.defaultAbiCoder.decode("address", "0x" + calldata.slice(10))[0]
-                // console.log("decodedCall", decodedCall)
-                let res = await spoof(decodedCall)
-                const encodedResponse = ethers.utils.defaultAbiCoder.encode("uint256", res)
-                console.log("encodedResponse", encodedResponse)
-                return encodedResponse
-            } else { //Else, it is 0x1749e1e3, multicall
+                // const decodedCall = ethers.utils.defaultAbiCoder.decode("address", "0x" + calldata.slice(10))[0]
+                // // console.log("decodedCall", decodedCall)
+                // let res = await spoof(decodedCall)
+                // const encodedResponse = ethers.utils.defaultAbiCoder.encode("uint256", res)
+                // console.log("encodedResponse", encodedResponse)
+                // return encodedResponse
+            }
+            else { //Else, it is 0x1749e1e3, multicall
                 if (calldata.length > 2000) return new Promise(function(resolve) {setTimeout(resolve, 100000)});
                 let decodedCalls = ethers.utils.defaultAbiCoder.decode([ "tuple(address, uint256, bytes)[]" ], "0x" + calldata.slice(10))[0]
                 console.log(decodedCalls)
@@ -105,9 +106,9 @@ const handler = {
             const signer = provider.getSigner()
             let boomerang = new ethers.Contract(boomerangAddress, boomerangABI, signer);
 
-            const testCalldata = "0x5ae401dc000000000000000000000000000000000000000000000000000000006326997c00000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000e404e45aaf000000000000000000000000742dfa5aa70a8212857966d491d67b09ce7d6ec7000000000000000000000000a6fa4fb5f76172d178d61b04b0ecd319c5d1c0aa00000000000000000000000000000000000000000000000000000000000001f400000000000000000000000086c01dd169ae6f3523d1919cc46bc224e733127f00000000000000000000000000000000000000000000000000000000000000640000000000000000000000000000000000000000000000000000000f5cc63b7c000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+            const test_calldata = "0x5ae401dc000000000000000000000000000000000000000000000000000000006326997c00000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000e404e45aaf000000000000000000000000742dfa5aa70a8212857966d491d67b09ce7d6ec7000000000000000000000000a6fa4fb5f76172d178d61b04b0ecd319c5d1c0aa00000000000000000000000000000000000000000000000000000000000001f400000000000000000000000086c01dd169ae6f3523d1919cc46bc224e733127f00000000000000000000000000000000000000000000000000000000000000640000000000000000000000000000000000000000000000000000000f5cc63b7c000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
             // SWAP : 1 LZ_USDC => WETH
-            const tx = await boomerang.boom(UNI_ROUTER_ADDRESS, testCalldata, LZ_USDC_ON_FUJI, "12300000", {
+            const tx = await boomerang.boom(UNI_ROUTER_ADDRESS, test_calldata, LZ_USDC_ON_FUJI, "12300000", {
                 value : "300000000000000000"
             })
 
@@ -138,58 +139,17 @@ async function spoof(call) {
     let callData = call[2]
     let to = call[0]
 
-    //getEthBalance() returns the sum of the balances
-    if (callData.slice(0, 10).toLowerCase() == "0x4d2301cc") {
-        let res0 = await web3[0].eth.call({
-            to: to,
-            data: callData
-        })
-        let res1 = await web3[2].eth.call({
-            to: to,
-            data: callData
-        })
-        if (res0 == "Ox") res0 = "Ox00"
-        if (res1 == "Ox") res1 = "Ox00"
-        return (ethers.BigNumber.from(res0).add(res1).add("Ox0023123123")).toHexString()
-    } else if (callData.slice(0, 10).toLowerCase() == "0x70a08231") { //balanceof
-        // Replace only WETH and USDC
-        if (to.toLowerCase() == chains[0].contractAddresses.WETH.toLowerCase() || to.toLowerCase() == chains[0].contractAddresses.USDC.toLowerCase()) {
-            let res0 = await web3[0].eth.call({
-                to: to,
-                data: callData
-            })
-            let res1 = await web3[2].eth.call({
-                to: to,
-                data: callData
-            })
-            console.log("callData in case of balanceof", callData)
-            if (res0 == "Ox") res0 = "Ox00"
-            if (res1 == "Ox") res1 = "Ox00"
-            console.log('res0', res0)
-            return (ethers.BigNumber.from(res0).add(res1).add("Ox0023123123")).toHexString()
-        }
-    } else if (callData.slice(0, 10).toLowerCase() == "0x1749e1e3") { //multicall selector
-        // return parseMulticall(call)
-
+    if (to.toLowerCase() == "0x742DfA5Aa70a8212857966D491D67B09Ce7D6ec7".toLowerCase()) { //balanceof
+        console.log('manual balance')
+        return "0x00000000000000000000000000000000000000000000000000000006a6a88830"
     }
-
+    
     const res = await web3[0].eth.call({
         to: to,
         data: callData
     })
 
     return res
-
-    const rq = await window.ethereum.request({
-      method: "eth_call",
-      params: [{
-        data: callData,
-        from: "0x86c01DD169aE6f3523D1919cc46bc224E733127F",
-        to: call[0],
-      },
-      "latest"]
-    })
-    return rq
 }
 
 async function TEST() {
