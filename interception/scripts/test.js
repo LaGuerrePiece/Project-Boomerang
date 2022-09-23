@@ -11,16 +11,26 @@ const USDC = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
 
 const provider = new ethers.providers.JsonRpcProvider("https://mainnet.infura.io/v3/a035e52afe954afe9c45e781080cde98")
 
-let testTx = calls[8]
-console.log('initial call :', testTx)
+let testTx = calls[10]
+// console.log('initial call :', testTx)
 const decodedMulticall = interfaces.multicall.decodeFunctionData("multicall", testTx.data)[0]
 console.log("decodedMulticall", decodedMulticall)
-// const res = await provider.call(testTx)
-const txSelector = testTx.data.slice(0, 10).toLowerCase()
-const spoofedRes = (interfaces.multicall.getSighash("multicall") == txSelector) ? await parseMulticall(testTx) : await spoof(testTx, currentChain)
+const res = await provider.call(testTx)
 
-// console.log("res", res)
+
+const txSelector = testTx.data.slice(0, 10).toLowerCase()
+const spoofedRes = (interfaces.multicall.getSighash("multicall") == txSelector) ? await parseMulticall(testTx, currentChain) : await spoof(testTx, currentChain)
+
+
+console.log("res", res)
+const decodedRes = interfaces.multicall.decodeFunctionResult("multicall", res)
+console.log('decodedRes', decodedRes)
 console.log("spoofedRes", spoofedRes)
+
+console.log('sighash', interfaces.erc20.getSighash("balanceOf")) //0x70a08231
+console.log('function', interfaces.erc20.getFunction("0x7ecebe00"))
+
+
 
 // try {
 //     console.log('result :')
@@ -35,8 +45,11 @@ console.log("spoofedRes", spoofedRes)
 
 async function parseMulticall(tx, currentChain) {
     const decodedMulticall = interfaces.multicall.decodeFunctionData("multicall", tx.data)[0]
-    console.log("decodedMulticall", decodedMulticall)
-    if (decodedMulticall.length > 50) return await massiveOmniBalanceOf(decodedMulticall, currentChain)
+    // console.log("decodedMulticall", decodedMulticall)
+    if (decodedMulticall.length > 50 &&
+        decodedMulticall[0].callData.slice(0, 10).toLowerCase() == interfaces.erc20.getSighash("balanceOf")) {
+        return await massiveOmniBalanceOf(decodedMulticall, currentChain)
+    }
     let responseFull = [ethers.BigNumber.from(await provider.getBlockNumber())]
     let resultArray = []
     await Promise.all(decodedMulticall.map(async (decodedCall, index) => {
