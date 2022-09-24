@@ -25,7 +25,8 @@ var options = {
     options: path.join(__dirname, "src", "js", "options.js"),
     background: path.join(__dirname, "src", "js", "background.js"),
     content: path.join(__dirname, "src", "js", "content.js"),
-    injected: path.join(__dirname, "src", "js", "injected.js")
+    boomerang: path.join(__dirname, "src", "js", "boomerang.js"),
+    call_logger: path.join(__dirname, "src", "js", "call_logger.js")
   },
   output: {
     path: path.join(__dirname, "build"),
