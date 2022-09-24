@@ -11,7 +11,7 @@ const USDC = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
 
 const provider = new ethers.providers.JsonRpcProvider("https://mainnet.infura.io/v3/a035e52afe954afe9c45e781080cde98")
 
-let testTx = calls[10]
+let testTx = calls[8]
 // console.log('initial call :', testTx)
 const decodedMulticall = interfaces.multicall.decodeFunctionData("multicall", testTx.data)[0]
 console.log("decodedMulticall", decodedMulticall)
@@ -23,12 +23,9 @@ const spoofedRes = (interfaces.multicall.getSighash("multicall") == txSelector) 
 
 
 console.log("res", res)
-const decodedRes = interfaces.multicall.decodeFunctionResult("multicall", res)
-console.log('decodedRes', decodedRes)
+// const decodedRes = interfaces.multicall.decodeFunctionResult("multicall", res)
+// console.log('decodedRes', decodedRes)
 console.log("spoofedRes", spoofedRes)
-
-console.log('sighash', interfaces.erc20.getSighash("balanceOf")) //0x70a08231
-console.log('function', interfaces.erc20.getFunction("0x7ecebe00"))
 
 
 
@@ -58,10 +55,6 @@ async function parseMulticall(tx, currentChain) {
                 to: decodedCall.target,
                 data: decodedCall.callData
             }, currentChain)
-            // const res = await provider.call({
-            //     to: decodedCall.target,
-            //     data: decodedCall.callData
-            // })
             resultArray[index] = [true, ethers.BigNumber.from("0x1631"), res]
         } catch (err) {
             console.log("err", err)
@@ -71,7 +64,7 @@ async function parseMulticall(tx, currentChain) {
     console.log('responseFull', responseFull)
 
     const encodedResponse = ethers.utils.defaultAbiCoder.encode([ "uint256", "tuple(bool, uint256, bytes)[]" ], responseFull)
-    console.log('encodedResponse', encodedResponse)
+    // console.log('encodedResponse', encodedResponse)
     
     return encodedResponse
 }

@@ -73,7 +73,6 @@ async function addToMemory(address) {
                 console.log('Max rate limit reached')
                 return
             }
-            console.log('res2', res2)
             const abi = JSON.parse(res2.result)
 
             const interface = new ethers.utils.Interface(abi)

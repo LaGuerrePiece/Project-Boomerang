@@ -27,7 +27,7 @@ export function getTokenName(tokenAddress, chain) {
             return tokenName
         }
     }
-    // console.log(`error : token ${tokenAddress} not found. Returning default ERC-20`)
+    console.log(`token ${tokenAddress} not found. Returning default ERC-20`)
     return "DEFAULT"
 }
 
