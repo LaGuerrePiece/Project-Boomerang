@@ -7,27 +7,15 @@ eth_call :
 - balanceOf : Remplacer addresses tokens, lancer sur toutes les chaines, agréger, retourner valeur
 - allowance : Remplacer addresse contract, lancer sur même chaine, retourner valeur
 
-Cas :
-- Call normal
-    - spoof
-- multicall
+TO-DO :
+- Quoter : renvoyer le tarif qu'on calcule
+- Liquidity pools :
+- nonces :
+- Chainlink gas price feed :
 
 
-eth_call = {
-    to:
-    data:
-}
-
-if (to == multicall) {
-    decode => trier => call on multiple => aggréger => encoder
-}
-
-
-
-
-
-
-
+// https://github.com/Uniswap/redux-multicall/blob/main/src/updater.tsx
+// https://github.com/Uniswap/redux-multicall/blob/main/src/utils/callState.ts
 
 
 
