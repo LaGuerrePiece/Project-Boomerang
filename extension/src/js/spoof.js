@@ -1,6 +1,6 @@
 const { ethers } = require('ethers')
 const { chains, interfaces, boomerangAddress } = require('./constants.js')
-const { getToken, getTokenOnOtherChain, getEquivalentTokens, bigSum, bigMax, batchCall, simpleCall } = require('./utils.js')
+const { getToken, getBlockNumber, getTokenOnOtherChain, getEquivalentTokens, bigSum, bigMax, batchCall, simpleCall } = require('./utils.js')
 
 /**
  * @notice - Spoof un eth_call simple
@@ -25,7 +25,7 @@ const { getToken, getTokenOnOtherChain, getEquivalentTokens, bigSum, bigMax, bat
             console.log("spoofedAllowance")
             return spoofedAllowance(call)
         default:
-            console.log('simpleCall')
+            // console.log('simpleCall')
             return simpleCall(call)
     }
 }
@@ -86,7 +86,36 @@ async function omniBalanceOf(call) {
  */
 export async function massiveOmniBalanceOf(decodedMulticall) {
     const currentChain = Number(window.ethereum.chainId)
-    console.log('massiveOmniBalanceOf')
+    console.log('massive balanceOf. Parsing into individual calls and balanceOf batch...')
+
+    decodedMulticall = Object.values(decodedMulticall)
+
+    let shiftedCalls = []
+    while (true) {
+        const call = decodedMulticall[0];
+        if (call.callData.slice(0, 10).toLowerCase() != interfaces.erc20.getSighash("balanceOf")) {
+            shiftedCalls.push(decodedMulticall.shift())
+        } else break
+    }
+
+    console.log('shiftedCalls', shiftedCalls)
+
+    let shiftedCallsResponses = []
+    await Promise.all(shiftedCalls.map(async (call, index) => {
+        try {
+            const res = await simpleCall({
+                to: call.to,
+                data: call.data,
+            })
+
+            shiftedCallsResponses[index] = ethers.utils.hexZeroPad(res, 32) // bug is here i think
+        } catch (err) {
+            console.log(err, `Error fetching simpleCall shifted from balanceOf multicall on currentChain`)
+        }
+    }))
+
+    console.log('shiftedCallsResponses', shiftedCallsResponses)
+
     let multicalls = []
 
     // Pour chaque chaine, construire un multicall avec les addresses des tokens des autres chaines
@@ -105,6 +134,7 @@ export async function massiveOmniBalanceOf(decodedMulticall) {
     // multicalls[1][1].length = 2
     // multicalls[2][1].length = 2
     
+    // Lance les multicall
     let responseArray = []
     await Promise.all(multicalls.map(async ([chain, multicall], index) => {
         try {
@@ -113,7 +143,7 @@ export async function massiveOmniBalanceOf(decodedMulticall) {
                 data: interfaces.multicall.encodeFunctionData("multicall", [multicall]),
                 chain: chain
             })
-            
+
             responseArray[index] = interfaces.multicall.decodeFunctionResult("multicall", res)[1];
         } catch (err) {
             console.log(err, `Error fetching massive balanceOf multicall on chain ${chain}`)
@@ -132,8 +162,12 @@ export async function massiveOmniBalanceOf(decodedMulticall) {
         }
     }
     let sums = tokenBalances.map(balances => bigSum(balances))
+    
+    // add response from earlier calls
+    sums = shiftedCallsResponses.concat(sums)
     sums = sums.map(sum => [true, ethers.BigNumber.from("0x1631"), sum])
-    let responseFull = [ethers.BigNumber.from(await chains[Number(window.ethereum.chainId)].provider.getBlockNumber()), sums]
+    console.log('sums final', sums)
+    let responseFull = [await getBlockNumber(currentChain), sums]
     const encodedResponse = ethers.utils.defaultAbiCoder.encode([ "uint256", "tuple(bool, uint256, bytes)[]" ], responseFull)
 
     return encodedResponse

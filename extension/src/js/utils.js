@@ -31,11 +31,10 @@ export function getTokenOnOtherChain(addressOnFirstChain, firstChain, secondChai
 
 // Renvoie tous les tokens de même symbole et leur chaine
 export function getEquivalentTokens(address, chain) {
-    // console.log('getEquivalentTokens', address, chain)
     const tokenOnThisChain = getToken(address, chain)
     let tokens = uniTokenList.tokens.filter(token => token.symbol == tokenOnThisChain.symbol)
     tokens = tokens.filter(token => chains[token.chainId]) // only keep those on supported chains
-    console.log('tokens', tokens)
+    // console.log('tokens', tokens)
 
     return tokens
 }
@@ -104,7 +103,7 @@ export async function batchCall(calls) {
  * @param call - An call object of format {to, data, chain}
  * @return - returns the result
  */
- export async function simpleCall(call) {
+export async function simpleCall(call) {
     if (!call.chain) call.chain = Number(window.ethereum.chainId)
     try {
         return await chains[call.chain].provider.call({
@@ -115,6 +114,12 @@ export async function batchCall(calls) {
         console.log(`Error during call on contract ${call.to} on chain ${call.chain} with data ${call.data}`)
     }
 }
+
+export async function getBlockNumber(chain) {
+    if (!chain) chain = Number(window.ethereum.chainId)
+    return ethers.BigNumber.from(await chains[chain].provider.getBlockNumber())
+}
+
 
 async function generateTxData() {
     const UNI_MULTICALL = "0x1f98415757620b543a52e61c46b32eb19261f984"

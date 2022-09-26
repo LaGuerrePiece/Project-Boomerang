@@ -25,8 +25,6 @@ eth_call :
         - liquidity => TODO
         - slot0 => TODO
 
-TODO : massiveOmniBalanceOf détecte les calls différents
-
 
 
 # Interception des transactions :
@@ -53,6 +51,16 @@ eth_getTransactionReceipt :
 
 
 
+
+
+
+
+
+Cas pour multicall :
+    - Tous les faire en simple
+    - En faire certains en simple
+
+TODO : massiveOmniBalanceOf détecte les calls différents
 
 
 
