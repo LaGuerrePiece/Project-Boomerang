@@ -1,15 +1,16 @@
 const { ethers } = require('ethers')
 const { memory } = require("./memory.js")
+const { uniTokenList } = require("./uni_token_list.js")
 
 const multicallAbi = memory["0x1f98415757620b543a52e61c46b32eb19261f984"].abi
 const erc20Abi = memory["typical_erc20"].abi
-const multicallIface = new ethers.utils.Interface(multicallAbi);
-const erc20Iface = new ethers.utils.Interface(erc20Abi);
 
 export const interfaces = {
-    multicall: multicallIface,
-    erc20: erc20Iface
+    multicall: new ethers.utils.Interface(multicallAbi),
+    erc20: new ethers.utils.Interface(erc20Abi),
 }
+
+export const boomerangAddress = "0xb362974139f31218bc1faf4be8cfd82c4b4b03a7"
 
 export const chains = {
     1: {
@@ -25,7 +26,7 @@ export const chains = {
     },
     4: {
         name: "rinkeby",
-        nativeToken: "RETH",
+        nativeToken: "ETH",
         addrs: {
             MULTICALL: "0x1F98415757620B543A52E61c46B32eB19261F984",
             WETH: "0xc778417e063141139fce010982780140aa0cd5ab",
@@ -36,7 +37,7 @@ export const chains = {
     },
     5: {
         name: "goerli",
-        nativeToken: "GETH",
+        nativeToken: "ETH",
         addrs: {
             MULTICALL: "0x1F98415757620B543A52E61c46B32eB19261F984",
             WETH: "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6",
@@ -44,5 +45,16 @@ export const chains = {
             DEFAULT: "0x7af963cf6d228e564e2a0aa0ddbf06210b38615d",
         },
         provider: new ethers.providers.JsonRpcProvider("https://goerli.infura.io/v3/a035e52afe954afe9c45e781080cde98")
+    },
+    42161: {
+        name: "arbitrum",
+        nativeToken: "ETH",
+        addrs: {
+            MULTICALL: "0x1F98415757620B543A52E61c46B32eB19261F984",
+            WETH: "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
+            USDC: "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8",
+            DEFAULT: "0xb8f9632e8d3cfaf84c254d98aea182a33a9d11bb", //RANDOM TOKEN
+        },
+        provider: new ethers.providers.JsonRpcProvider("https://rpc.ankr.com/arbitrum")
     },
 }
