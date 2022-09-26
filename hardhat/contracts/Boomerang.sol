@@ -116,7 +116,7 @@ contract Boomerang is ERC2771Recipient {
             msg.sender == address(stargateRouter), 
             "only stargate router can call sgReceive!"
         );
-        (address _toAddr, uint256 _gas, bytes _data) = abi.decode(_payload, (address, uint256, bytes);
+        (address _toAddr, uint256 _gas, bytes _data) = abi.decode(_payload, (address, uint256, bytes));
         (bool success, ) = address(_toAddr).call{value: 0, gas: _gas}(_data);
         require(success, "The forwarded transaction failed");
         emit ReceivedOnDestination(_token, amountLD);
