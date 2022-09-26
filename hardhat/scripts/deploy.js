@@ -3,9 +3,8 @@ const hre = require("hardhat");
 async function main() {
   const Boomerang = await hre.ethers.getContractFactory("Boomerang");
   const boomerang = await Boomerang.deploy(
-    "0x7A95fA73250dc53556d264522150A940d4C50238", // gsn forwarder
+    "0xaBcC9b596420A9E9172FD5938620E265a0f9Df92", // gelato forwarder
     "0x13093E05Eb890dfA6DacecBdE51d24DabAb2Faa1", // stargate router
-    "0x212A827f666bdfdebbBF68EE6F6Ca19b4D05128C"  // abacus x-chain account router
     );                                            // all on fuji testnet
 
   await boomerang.deployed();
