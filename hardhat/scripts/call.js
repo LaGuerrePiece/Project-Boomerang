@@ -1,7 +1,5 @@
 const hre = require("hardhat");
 
-boomerang_ABI = 
-
 async function main() {
 
     const boomerang = await ethers.getContractFactory("Boomerang");
