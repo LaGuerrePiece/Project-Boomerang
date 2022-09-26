@@ -85,8 +85,15 @@ contract Boomerang is ERC2771Recipient {
             address(this),
             bridgedAmount
         );
+
+        // Prepare data
+        // @param to The destination adress to be called
+        // @param gas The gas for the function to be called
+        // @param data The calldata itself
+        bytes memory data = abi.encode(to, 200000, data);
+
         // Bridge tokens
-        bridgeToken(bridgedToken, bridgedAmount, senderInterchainAccount);
+        bridgeToken(bridgedToken, bridgedAmount, senderInterchainAccount, data);
 
     }
 
@@ -95,7 +102,7 @@ contract Boomerang is ERC2771Recipient {
     // @param _nonce The message ordering nonce
     // @param _token The token contract on the local chain
     // @param amountLD The qty of local _token contract tokens  
-    // @param _payload The bytes containing the toAddress
+    // @param _payload The bytes containing the toAddress and the calldata
 
     function sgReceive(
         uint16 _chainId, 
