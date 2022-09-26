@@ -3,7 +3,7 @@ const hre = require("hardhat");
 async function main() {
 
     const Boomerang = await ethers.getContractFactory("Boomerang");
-    const boomerang = await Boomerang.attach("0xb89b05b89c35F95DBd359bBB8278E3541664824E");
+    const boomerang = await Boomerang.attach("0xF400E708DFC19e334781A7fa2d45485637692587");
 
 
     const usdc = "0x4A0D1092E9df255cf95D72834Ea9255132782318"; 
