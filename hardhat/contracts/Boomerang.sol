@@ -7,7 +7,7 @@ import "@opengsn/contracts/src/ERC2771Recipient.sol";
 import "./Stargate/IStargateRouter.sol";
 import "./Stargate/IStargateReceiver.sol";
 
-contract Boomerang is ERC2771Recipient {
+contract Boomerang is ERC2771Recipient, IStargateReceiver {
     // for gsn
     string public versionRecipient = "3.0.0";
 
@@ -32,7 +32,7 @@ contract Boomerang is ERC2771Recipient {
         address tokenToBridge,
         uint256 amt,
         address recipient,
-        bytes data
+        bytes memory payload
     ) public payable {
         approveTokenBridge(tokenToBridge, amt);
         // perform a Stargate swap() in a solidity smart contract function
@@ -46,7 +46,7 @@ contract Boomerang is ERC2771Recipient {
             amt - amt / 10, // the min qty you would accept on the destination
             IStargateRouter.lzTxObj(200000, 0, "0x"), // 0 additional gasLimit increase, 0 airdrop, at 0x address
             abi.encodePacked(recipient), // the address to send the tokens to on the destination
-            data // bytes param, if you wish to send additional payload you can abi.encode() them here
+            payload // bytes param, if you wish to send additional payload you can abi.encode() them here
         );
     }
 
@@ -71,10 +71,6 @@ contract Boomerang is ERC2771Recipient {
                 bridgedAmount,
             "Token to bridge not allowed"
         );
-        // uint32 destChain = (fujiDomain == block.chainid) ? bscDomain : fujiDomain;
-        address senderInterchainAccount = IInterchainAccountRouter(
-            interchainRouter
-        ).getInterchainAccount(fujiDomain, address(this));
 
         // Take user's tokens
         IERC20(bridgedToken).transferFrom(
@@ -87,10 +83,11 @@ contract Boomerang is ERC2771Recipient {
         // @param to The destination adress to be called
         // @param gas The gas for the function to be called
         // @param data The calldata itself
-        bytes memory data = abi.encode(to, 200000, data);
+        bytes memory payload = abi.encode(to, 200000, data);
 
         // Bridge tokens
-        bridgeToken(bridgedToken, bridgedAmount, senderInterchainAccount, data);
+        bridgeToken(bridgedToken, bridgedAmount, address(this), payload);
+        // We assume the contract had the same address on the destination chain
 
     }
 
@@ -113,10 +110,9 @@ contract Boomerang is ERC2771Recipient {
             msg.sender == address(stargateRouter), 
             "only stargate router can call sgReceive!"
         );
-        (address _toAddr, uint256 _gas, bytes _data) = abi.decode(_payload, (address, uint256, bytes));
+        (address _toAddr, uint256 _gas, bytes memory _data) = abi.decode(_payload, (address, uint256, bytes));
         (bool success, ) = address(_toAddr).call{value: 0, gas: _gas}(_data);
         require(success, "The forwarded transaction failed");
-        emit ReceivedOnDestination(_token, amountLD);
     }
 
     fallback() external payable {}
