@@ -11,22 +11,19 @@ contract Boomerang is ERC2771Recipient {
     // for gsn
     string public versionRecipient = "3.0.0";
 
-    address tokenBridge;
+    address stargateRouter;
 
     // for Abacus
     uint32 private fujiDomain = 43113;
     uint32 private mumbaiDomain = 80001;
     uint32 private bscDomain = 0x62732d74;
-    address interchainRouter;
 
     constructor(
         address forwarder,
-        address stargateRouterAddress,
-        address interchainRouterAddress
+        address stargateRouterAddress
     ) {
         _setTrustedForwarder(forwarder);
         stargateRouter = stargateRouterAddress;
-        interchainRouter = interchainRouterAddress;
     }
 
 
