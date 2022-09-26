@@ -1,35 +1,43 @@
 const { ethers } = require('ethers')
 const { chains } = require('./constants.js')
 const { memory } = require("./memory.js")
+const { uniTokenList } = require("./uni_token_list.js")
 
-// From a token address on one chain, returns the canonical token on all chains
-// Return format : {tokenAddr, chain}[]
-export function getTokenArray(tokenName) {
-    
-    let tokenArray = []
-    for (const chain in chains) {
-        const tokenAddr = chains[chain].addrs[tokenName]
-        if (tokenAddr) {
-            tokenArray.push({
-                tokenAddr,
-                chain
-            })
-        } else {
-            console.log(`Token ${tokenName} not found on chain ${chain}`)
-        }
+export function getToken(address, chain) {
+    const tokenOnThisChain = uniTokenList.tokens.find(token =>
+        token.chainId == chain
+        && token.address.toLowerCase() == address.toLowerCase()
+    )
+    if (!tokenOnThisChain) {
+        console.log(`token not found. Returning default ERC-20`)
+        return {address: chains[chain].addrs.DEFAULT, chainId: chain, symbol: "DEFAULT"}
     }
-    return tokenArray
+    return tokenOnThisChain
 }
 
-export function getTokenName(tokenAddress, chain) {
-    const tokens = chains[chain].addrs
-    for (const tokenName in tokens) {
-        if (tokens[tokenName].toLowerCase() == tokenAddress.toLowerCase()) {
-            return tokenName
-        }
+// Returns address of a token on another chain
+export function getTokenOnOtherChain(addressOnFirstChain, firstChain, secondChain) {
+    const tokenOnFirstChain = getToken(addressOnFirstChain, firstChain)
+    const tokenOnSecondChain = uniTokenList.tokens.find(token =>
+        token.chainId == secondChain
+        && token.symbol == tokenOnFirstChain.symbol
+    )
+    if (!tokenOnSecondChain) {
+        // console.log(`token not found. Returning default ERC-20`)
+        return {address : chains[secondChain].addrs.DEFAULT, chainId: secondChain, symbol: "DEFAULT"}
     }
-    console.log(`token ${tokenAddress} not found. Returning default ERC-20`)
-    return "DEFAULT"
+    return tokenOnSecondChain
+}
+
+// Renvoie tous les tokens de même symbole et leur chaine
+export function getEquivalentTokens(address, chain) {
+    // console.log('getEquivalentTokens', address, chain)
+    const tokenOnThisChain = getToken(address, chain)
+    let tokens = uniTokenList.tokens.filter(token => token.symbol == tokenOnThisChain.symbol)
+    tokens = tokens.filter(token => chains[token.chainId]) // only keep those on supported chains
+    console.log('tokens', tokens)
+
+    return tokens
 }
 
 export function bigSum(array) {
@@ -37,7 +45,7 @@ export function bigSum(array) {
     for (const hex of array) {
         sum = sum.add(ethers.BigNumber.from(hex))
     }
-    return sum
+    return ethers.utils.hexZeroPad(sum.toHexString(), 32)
 }
 
 export function bigMax(array) {
@@ -48,7 +56,64 @@ export function bigMax(array) {
             max = bn
         }
     }
-    return max
+    return ethers.utils.hexZeroPad(max.toHexString(), 32)
+}
+
+export async function fetchAbi(addr) {
+    try {
+        const res = await fetch(`https://api.etherscan.io/api?module=contract&action=getabi&address=${addr}&apikey=P2FFHY1K8MGSX1Y57S7NSI3JZENKQ6MTU9`)
+        if (!res.ok) {
+            console.log('error in fetching abi')
+            return
+        }
+        const json = await res.json()
+        if (json.status != '1') {
+            console.log('Max rate limit reached')
+            return
+        }
+        return JSON.parse(json.result)
+    } catch (err) {
+        console.log(err)
+    }
+}
+
+/**
+ * @notice - Calls on multiple chains
+ * @param call - An array of call objects of format {to, data, chain}
+ * @return - returns an array of the results
+ */
+export async function batchCall(calls) {
+    let responseArray = []
+    await Promise.all(calls.map(async (call) => {
+        try {
+            const res = await chains[call.chain].provider.call({
+                to: call.to,
+                data: call.data
+            })
+            responseArray.push(res)
+        } catch (err) {
+            console.log(`Error during batchCall on contract ${call.to} on chain ${call.chain} with data ${call.data}`)
+        }
+    }))
+    return responseArray
+}
+
+/**
+ * @notice - Call on a chain
+ * If no chain is specified, calls on the current chain
+ * @param call - An call object of format {to, data, chain}
+ * @return - returns the result
+ */
+ export async function simpleCall(call) {
+    if (!call.chain) call.chain = Number(window.ethereum.chainId)
+    try {
+        return await chains[call.chain].provider.call({
+            to: call.to,
+            data: call.data
+        })
+    } catch (err) {
+        console.log(`Error during call on contract ${call.to} on chain ${call.chain} with data ${call.data}`)
+    }
 }
 
 async function generateTxData() {
@@ -62,3 +127,4 @@ async function generateTxData() {
     console.log(erc20Iface.getSighash("allowance"))
     console.log("tx", await erc20.populateTransaction.allowance("0x86c01dd169ae6f3523d1919cc46bc224e733127f", "0x7a250d5630b4cf539739df2c5dacb4c659f2488d"))
 }
+

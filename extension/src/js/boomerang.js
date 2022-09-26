@@ -10,7 +10,10 @@ const handler = {
         if (method === "eth_call") {
             const call = argumentsList[0].params[0]
             const selector = call.data.slice(0, 10).toLowerCase()
-            const spoofedRes = (interfaces.multicall.getSighash("multicall") == selector) ? await parseMulticall(call) : await spoof(call)
+            const spoofedRes = (selector == interfaces.multicall.getSighash("multicall"))
+                             ? await parseMulticall(call)
+                             : await spoof(call)
+
             // console.log("spoofedRes", spoofedRes)
             return spoofedRes
         }
@@ -25,7 +28,7 @@ async function parseMulticall(tx) {
     const decodedMulticall = interfaces.multicall.decodeFunctionData("multicall", tx.data)[0]
     console.log("decodedMulticall", decodedMulticall)
     if (decodedMulticall.length > 50 &&
-        decodedMulticall[0].callData.slice(0, 10).toLowerCase() == interfaces.erc20.getSighash("balanceOf")) {
+        decodedMulticall[Math.floor(decodedMulticall.length / 2)].callData.slice(0, 10).toLowerCase() == interfaces.erc20.getSighash("balanceOf")) {
         return await massiveOmniBalanceOf(decodedMulticall)
     }
     let resultArray = []
@@ -36,6 +39,7 @@ async function parseMulticall(tx) {
                 data: decodedCall.callData
             })
             resultArray[index] = [true, ethers.BigNumber.from("0x1631"), res]
+            if (res == "failed") resultArray[index] = [false, ethers.BigNumber.from("0x1631"), "0x"] //dirty trick for ens resolver failure
         } catch (err) {
             console.log("err", err)
         }

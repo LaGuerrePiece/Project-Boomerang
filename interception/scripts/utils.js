@@ -20,7 +20,7 @@ export function getTokenArray(tokenName) {
     return tokenArray
 }
 
-export function getTokenName(tokenAddress, chain) {
+export function getTokenSymbol(tokenAddress, chain) {
     const tokens = chains[chain].addrs
     for (const tokenName in tokens) {
         if (tokens[tokenName].toLowerCase() == tokenAddress.toLowerCase()) {

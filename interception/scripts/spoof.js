@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 import { chains, interfaces } from './constants.js';
-import { getTokenName, getTokenArray, bigSum, bigMax } from './utils.js'
+import { getTokenSymbol, getTokenArray, bigSum, bigMax } from './utils.js'
 
 /**
  * @notice - Spoof un eth_call simple
@@ -82,7 +82,7 @@ async function classicCall(call, currentChain) {
  * @return - The balance of the user in all canonical versions of the token
  */
 async function omniBalanceOf(call, currentChain) {
-    const tokenName = getTokenName(call.to, currentChain)
+    const tokenName = getTokenSymbol(call.to, currentChain)
     let tokenArray = getTokenArray(tokenName)
 
     let responseArray = []
@@ -117,7 +117,7 @@ export async function massiveOmniBalanceOf(decodedMulticall, currentChain) {
     for (const chain in chains) {
         let multicall = decodedMulticall
         multicall = multicall.map((call) => {
-            const tokenName = getTokenName(call.target, currentChain)
+            const tokenName = getTokenSymbol(call.target, currentChain)
             return {
                 target: chains[chain].addrs[tokenName],
                 gasLimit: call.gasLimit,
@@ -174,7 +174,7 @@ export async function massiveOmniBalanceOf(decodedMulticall, currentChain) {
  * Pour l'instant, demande sur chaque chaine, puis retourne l'allowance la plus haute
  */
 async function spoofedAllowance(call, currentChain) {
-    const tokenName = getTokenName(call.to, currentChain)
+    const tokenName = getTokenSymbol(call.to, currentChain)
     let tokenArray = getTokenArray(tokenName)
 
     let responseArray = []

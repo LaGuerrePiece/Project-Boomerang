@@ -1,17 +1,68 @@
-# 🪃 Design 🪃
+## 🪃 Design 🪃
 
+# Interception des callStatic:
 
-Interception :
+eth_chainId :
+    - TODO : Toujours retourner 1 ?
+
+eth_blockNumber :
+    - TODO : Toujours le rassurer
 
 eth_call :
-- balanceOf : Remplacer addresses tokens, lancer sur toutes les chaines, agréger, retourner valeur
-- allowance : Remplacer addresse contract, lancer sur même chaine, retourner valeur
+    - erc-20
+        - balanceOf => omniBalanceOf : retourne somme des balanceOf des tokens canoniques sur toutes chaines
+        - allowance => spoofedAllowance : retourne allowance du user au contrat Boomerang sur la chaîne de la meta-tx
+        - nonces => TODO : retourne la nonce du user de ce token sur la chaine de la meta-tx
+        - Deposit (WETH) => TODO
+    - multicall :
+        - getEthBalance => omniGetEthBalance : retourne getEthBalance + balanceOf des versions wrappées sur toutes chaines
+    - Quoter :
+        - quoteExactOutput => TODO : retourner notre estimation du prix
+        - quoteExactOutputSingle => TODO : retourner notre estimation du prix
+    - Chainlink gas price feed :
+        - latestAnswer => TODO : gasPrice on the chain of the meta-tx ? final fee estimate ? 
+    - v3 pool :
+        - liquidity => TODO
+        - slot0 => TODO
 
-TO-DO :
-- Quoter : renvoyer le tarif qu'on calcule
-- Liquidity pools :
-- nonces :
-- Chainlink gas price feed :
+TODO : massiveOmniBalanceOf détecte les calls différents
+
+
+
+# Interception des transactions :
+
+eth_sendTransaction:
+    - TODO : Renvoyer une demande de signature d'une meta-tx qui permet à Boomerang de bridger + swapper
+
+eth_signTypedData_v4 :
+    - TODO : Permit for Boomerang to use user's tokens
+
+eth_estimateGas :
+
+eth_accounts :
+
+eth_sendTransaction :
+
+eth_getTransactionByHash :
+
+eth_getTransactionReceipt :
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // https://github.com/Uniswap/redux-multicall/blob/main/src/updater.tsx
@@ -28,12 +79,6 @@ Methods :
 - Alchemy: yearn
 - Infura : Balancer
 - Custom API : 1inch
-
-
-
-sendTransaction :
-- 
-
 
 
 
