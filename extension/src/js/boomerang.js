@@ -1,6 +1,7 @@
 const { ethers } = require("ethers")
-const { spoof, massiveOmniBalanceOf } = require('./spoof.js')
+const { spoof } = require('./spoof.js')
 const { chains, interfaces } = require('./constants.js')
+const { parseMulticall } = require('./multiParser.js')
 const { GelatoRelaySDK } = require("@gelatonetwork/relay-sdk");
 
 
@@ -24,38 +25,11 @@ const handler = {
 window.ethereum.request = new Proxy(window.ethereum.request, handler)
 console.log("window.ethereum", window.ethereum)
 
-async function parseMulticall(tx) {
-    const decodedMulticall = interfaces.multicall.decodeFunctionData("multicall", tx.data)[0]
-    console.log("decodedMulticall", decodedMulticall)
-    if (decodedMulticall.length > 50 &&
-        decodedMulticall[Math.floor(decodedMulticall.length / 2)].callData.slice(0, 10).toLowerCase() == interfaces.erc20.getSighash("balanceOf")) {
-        return await massiveOmniBalanceOf(decodedMulticall)
-    }
-    let resultArray = []
-    await Promise.all(decodedMulticall.map(async (decodedCall, index) => {
-        try {
-            const res = await spoof({
-                to: decodedCall.target,
-                data: decodedCall.callData
-            })
-            resultArray[index] = [true, ethers.BigNumber.from("0x1631"), res]
-            if (res == "failed") resultArray[index] = [false, ethers.BigNumber.from("0x1631"), "0x"] //dirty trick for ens resolver failure
-        } catch (err) {
-            console.log("err", err)
-        }
-    }))
-    const responseFull = [
-        ethers.BigNumber.from(await window.ethereum.request({
-            method: 'eth_blockNumber',
-            params: [],
-        })),
-        resultArray
-    ]
 
-    const encodedResponse = ethers.utils.defaultAbiCoder.encode([ "uint256", "tuple(bool, uint256, bytes)[]" ], responseFull)
-    // console.log('encodedResponse', encodedResponse)
-    return encodedResponse
-}
+
+
+
+
 
 async function test () {
 

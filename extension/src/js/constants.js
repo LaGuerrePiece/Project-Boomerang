@@ -4,10 +4,12 @@ const { uniTokenList } = require("./uni_token_list.js")
 
 const multicallAbi = memory["0x1f98415757620b543a52e61c46b32eb19261f984"].abi
 const erc20Abi = memory["typical_erc20"].abi
+const v3poolAbi = memory["typical_v3_pool"].abi
 
 export const interfaces = {
     multicall: new ethers.utils.Interface(multicallAbi),
     erc20: new ethers.utils.Interface(erc20Abi),
+    v3pool: new ethers.utils.Interface(v3poolAbi),
 }
 
 export const boomerangAddress = "0xb362974139f31218bc1faf4be8cfd82c4b4b03a7"
