@@ -118,5 +118,12 @@ contract Boomerang is ERC2771Recipient, IStargateReceiver {
     fallback() external payable {}
 
     receive() external payable {}
+    
+    uint256 public counter;
+
+    function increment() public
+    {
+        counter += 1;
+    }
 
 }
