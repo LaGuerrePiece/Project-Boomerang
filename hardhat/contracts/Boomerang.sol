@@ -132,17 +132,44 @@ contract Boomerang is ERC2771Recipient, IStargateReceiver {
 
     struct Call {
         address from;
+        address to;
         uint256 fromChain;
         uint256 toChain;
         bytes callData;
         address rToken;
         address sToken;
+        uint256 sTokenAmount;
         uint256 deadline;
     }
 
     function callWithSignature(bytes calldata call, bytes calldata signature) public {
         Call memory c = abi.decode(call, (Call));
         _verify(c.from, signature, call);
+
+        // Check user's signature
+        require(
+            IERC20(c.sToken).allowance(_msgSender(), address(this)) >= c.sTokenAmount,
+            "Token to bridge not allowed"
+        );
+
+        // Take user's tokens
+        IERC20(c.sToken).transferFrom(
+            _msgSender(),
+            address(this),
+            c.sTokenAmount
+        );
+
+        // Prepare data
+        // @param to The destination adress to be called
+        // @param gas The gas for the function to be called
+        // @param data The calldata itself
+        bytes memory payload = abi.encode(c.to, 200000, c.callData);
+
+        // Bridge tokens
+        bridgeToken(c.sToken, c.sTokenAmount, address(this), payload);
+        // We assume the contract had the same address on the destination chain
+
+
     }
 
     function _verify(
