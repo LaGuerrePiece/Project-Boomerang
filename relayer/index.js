@@ -17,7 +17,7 @@ const provider = new ethers.providers.JsonRpcProvider("https://goerli.infura.io/
 const signer = new ethers.Wallet("2ccfe123b7e5a3f6672cc6956f3c25b7fa25df1365cf0879a207756a68ac3f8b", provider);
 const boomerang = new ethers.Contract("0x6F9049c097A9812C3256302619793E5d94B6Cfe1", abi, signer);
 
-console.log("Working with Boomerang contract at ", signer.address);
+console.log("Working with Boomerang contract at ", boomerang.address + " wtih " + signer);
 
 router.get('/',(req, res) => {
     res.send("Ok");
