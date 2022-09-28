@@ -33,7 +33,7 @@ console.log("window.ethereum", window.ethereum)
 
 async function test () {
 
-    const boomerang = "0xF400E708DFC19e334781A7fa2d45485637692587"
+    const boomerang = "0x7eA316864F01Bd02F31f8eb94210F956144893C7"
     const abi = [
         {
           "inputs": [
@@ -137,6 +137,19 @@ async function test () {
         },
         {
           "inputs": [],
+          "name": "counter",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
           "name": "getTrustedForwarder",
           "outputs": [
             {
@@ -146,6 +159,13 @@ async function test () {
             }
           ],
           "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "increment",
+          "outputs": [],
+          "stateMutability": "nonpayable",
           "type": "function"
         },
         {
@@ -225,48 +245,43 @@ async function test () {
       ]
                               
     const feeToken = "0x4A0D1092E9df255cf95D72834Ea9255132782318";
-    const amountToSend = ethers.utils.parseUnits("0.05");
     // connect to the blockchain via a front-end provider
     const provider = new ethers.providers.Web3Provider(window.ethereum);
     // generate the target payload
     const signer = provider.getSigner();
     const contract = new ethers.Contract(boomerang, abi, signer);
     const { data } = 
-        await contract.populateTransaction.boom("0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45", "0x5ae401dc0000000000000000000000000000000000000000000000000000000063268e0600000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000124b858183f0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000008000000000000000000000000086c01dd169ae6f3523d1919cc46bc224e733127f00000000000000000000000000000000000000000000000000000000000b71b000000000000000000000000000000000000000000000000000000017b2149afe0000000000000000000000000000000000000000000000000000000000000042742dfa5aa70a8212857966d491d67b09ce7d6ec7000bb89c3c9283d3e44854697cd22d3faa240cfb032889000bb8a6fa4fb5f76172d178d61b04b0ecd319c5d1c0aa0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e404e45aaf000000000000000000000000742dfa5aa70a8212857966d491d67b09ce7d6ec7000000000000000000000000a6fa4fb5f76172d178d61b04b0ecd319c5d1c0aa00000000000000000000000000000000000000000000000000000000000001f400000000000000000000000086c01dd169ae6f3523d1919cc46bc224e733127f000000000000000000000000000000000000000000000000000000000003d0900000000000000000000000000000000000000000000000000000a24e17772491000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", feeToken, "100000000");
+        await contract.populateTransaction.increment();
     // populate the relay SDK request body
     const request = {
-        chainId: provider.network.chainId,
-        target: myDummyWallet,
+        //chainId: provider.network.chainId,
+        chainId: 5,
+        target: "0x84Ed4e0D99747658Ec4be363ce7842Aa9938c180",
         data: data,
         feeToken: feeToken,
     };
   
+    console.log("sending to Gelato");
     // send relayRequest to Gelato Relay API
-    const relayResponse = 
-    await GelatoRelaySDK.relayWithSyncFee(request);
+    const relayResponse = await GelatoRelaySDK.relayWithSyncFee(request);
+    // console.log('relayResponse', relayResponse)
 
-    // const provider = new ethers.providers.JsonRpcProvider("https://mainnet.infura.io/v3/a035e52afe954afe9c45e781080cde98")
-    // const res = await provider.call({
-    //     to: "0xa2c122be93b0074270ebee7f6b7292c7deb45047",
-    //     data: "0x59d1d43cac137125297cdf441b218182c2f731d95c111f6d02ae7ece4d39d6299411d8b2000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000066176617461720000000000000000000000000000000000000000000000000000"
-    // })
+    setTimeout(async () => {
+        let response = await fetch("https://relay.gelato.digital/tasks/status/" + relayResponse.taskId, {
+        method: 'GET', // *GET, POST, PUT, DELETE, etc.
+        mode: 'cors', // no-cors, *cors, same-origin
+        // credentials: 'same-origin', // include, *same-origin, omit
+        headers: {
+        'Content-Type': 'application/json'
+        },
+    });
+    let res = await response.json();
+    console.log('response :', res)
 
-    // const abi = [{"inputs":[{"internalType":"contract ENS","name":"ensAddr","type":"address"}],"payable":false,"stateMutability":"nonpayable","type":"constructor"},{"constant":true,"inputs":[],"name":"ens","outputs":[{"internalType":"contract ENS","name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"internalType":"bytes32","name":"node","type":"bytes32"},{"internalType":"string","name":"_name","type":"string"}],"name":"setName","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"}]
-    // const iface = new ethers.utils.Interface(abi);
-    // const decoded = iface.decodeFunctionData(iface.getFunction("0x59d1d43c"), "0x59d1d43cac137125297cdf441b218182c2f731d95c111f6d02ae7ece4d39d6299411d8b2000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000066176617461720000000000000000000000000000000000000000000000000000")
-    // console.log('decoded', decoded)
-    // // const res = await window.ethereum.request({
-    // //     method: "eth_call",
-    // //     params: [{
-    // //       data: "0x59d1d43cac137125297cdf441b218182c2f731d95c111f6d02ae7ece4d39d6299411d8b2000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000066176617461720000000000000000000000000000000000000000000000000000",
-    // //       from: "0xE6E4b6a802F2e0aeE5676f6010e0AF5C9CDd0a50",
-    // //       to: "0xA2C122BE93b0074270ebeE7f6b7292C7deB45047",
-    // //     },
-    // //     "latest"]
-    // // })
+    }, "10000")
+      
 
-    // console.log('res', res)
 }
 
 
-// test()
+test()

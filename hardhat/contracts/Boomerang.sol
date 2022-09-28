@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@opengsn/contracts/src/ERC2771Recipient.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 import "./Stargate/IStargateRouter.sol";
 import "./Stargate/IStargateReceiver.sol";
@@ -118,5 +119,68 @@ contract Boomerang is ERC2771Recipient, IStargateReceiver {
     fallback() external payable {}
 
     receive() external payable {}
+    
+    uint256 public counter;
 
+    function increment() public
+    {
+        counter += 1;
+    }
+
+
+    // The new system with call packet and signature verification
+
+    struct Call {
+        address from;
+        address to;
+        uint256 fromChain;
+        uint256 toChain;
+        bytes callData;
+        address rToken;
+        address sToken;
+        uint256 sTokenAmount;
+        uint256 deadline;
+    }
+
+    function callWithSignature(bytes calldata call, bytes calldata signature) public {
+        Call memory c = abi.decode(call, (Call));
+        _verify(c.from, signature, call);
+
+        // Check user's signature
+        require(
+            IERC20(c.sToken).allowance(_msgSender(), address(this)) >= c.sTokenAmount,
+            "Token to bridge not allowed"
+        );
+
+        // Take user's tokens
+        IERC20(c.sToken).transferFrom(
+            _msgSender(),
+            address(this),
+            c.sTokenAmount
+        );
+
+        // Prepare data
+        // @param to The destination adress to be called
+        // @param gas The gas for the function to be called
+        // @param data The calldata itself
+        bytes memory payload = abi.encode(c.to, 200000, c.callData);
+
+        // Bridge tokens
+        bridgeToken(c.sToken, c.sTokenAmount, address(this), payload);
+        // We assume the contract had the same address on the destination chain
+
+
+    }
+
+    function _verify(
+        address _address,
+        bytes memory _signature,
+        bytes memory data
+    ) private pure {
+        require(
+            _address ==
+                ECDSA.recover(ECDSA.toEthSignedMessageHash(data), _signature),
+            "Invalid signature"
+        );
+    }
 }
