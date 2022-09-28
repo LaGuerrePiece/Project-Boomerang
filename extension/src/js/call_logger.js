@@ -5,39 +5,37 @@ const { interfaces } = require("./constants.js")
 
 window.fetch = new Proxy(window.fetch, {
     apply: async function(target, thisArg, argumentsList) {
-        console.log('argumentsList', argumentsList)
+        // console.log('argumentsList', argumentsList)
         return target(...argumentsList)
     }
 })
 
-
-const handler = {
+window.ethereum.request = new Proxy(window.ethereum.request, {
     apply: async function(target, thisArg, argumentsList) {
         const method = argumentsList[0].method
-        console.log('method', method)
+        // console.log('method', method)
         if (method === "eth_call") {
             const call = argumentsList[0].params[0]
-            // console.log("call", call)
 
             const selector = call.data.slice(0, 10).toLowerCase()
-
             if (selector == interfaces.multicall.getSighash("multicall")) {
                 const decodedMulticall = interfaces.multicall.decodeFunctionData("multicall", call.data)[0]
                 decodedMulticall.forEach(decodedCall => log({
                     to: decodedCall.target,
                     data: decodedCall.callData
                 }))
-                // return target(...argumentsList)
             }
 
             log(call)
+        } else if (method === "eth_sendTransaction") {
+            console.log('transaction :', argumentsList[0].params[0])
         }
 
       return target(...argumentsList)
     }
-};
+})
 
-window.ethereum.request = new Proxy(window.ethereum.request, handler)
+
 console.log("window.ethereum", window.ethereum)
 
 async function log(call) {
@@ -61,7 +59,7 @@ async function log(call) {
     const contractName = memory[address.toLowerCase()].name
     if (!fctName) fctName = "function not found in abi"
 
-    console.log(`Calling ${fctName} on ${contractName} which is ${call.to} with selector ${selector}`)
+    // console.log(`Calling ${fctName} on ${contractName} which is ${call.to} with selector ${selector}`)
 }
 
 async function addToMemory(address) {
