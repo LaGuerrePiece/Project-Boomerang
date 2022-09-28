@@ -1,25 +1,44 @@
 {
   "name": "Booooomerang",
+  "version": "0.0.1",
+  "homepage_url": "https://github.com/LaGuerrePiece/Project-Boomerang",
+  "manifest_version": 3,
   "background": {
-    "page": "background.html"
+    "service_worker": "background.bundle.js"
   },
-  "browser_action": {
-    "default_popup": "popup.html",
-    "default_icon": "icon-34.png"
+  "action": {
+    "default_popup": "popup.html"
   },
   "icons": {
     "128": "icon-128.png"
   },
   "content_scripts": [
     {
-      "matches": [
-        "http://*/*",
-        "https://*/*"
-      ],
+      "matches": ["<all_urls>"],
       "js": ["content.bundle.js"]
     }
   ],
-  "web_accessible_resources" : ["/call_logger.bundle.js", "/boomerang.bundle.js"],
-  "manifest_version": 2,
-  "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'"
+  "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess",
+    "declarativeNetRequestFeedback"
+  ],
+  "host_permissions": [
+    "<all_urls>",
+    "*://*.google.com/*",
+    "*://*.uniswap.org/*",
+    "*://*.abcd.com/*",
+    "*://*.example.com/*",
+    "https://*.xyz.com/*",
+    "*://*.headers.com/*",
+    "*://app.uniswap.org/*",
+    "https://mainnet.infura.io/v3/"
+  ],
+  "web_accessible_resources": [{
+    "resources": ["/call_logger.bundle.js", "/boomerang.bundle.js"],
+    "matches": ["<all_urls>"]
+  }],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://mainnet.infura.io/v3/"
+  }
 }

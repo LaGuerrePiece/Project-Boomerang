@@ -3,10 +3,18 @@ const { memory } = require("./memory.js")
 const { fetchAbi } = require("./utils.js")
 const { interfaces } = require("./constants.js")
 
+window.fetch = new Proxy(window.fetch, {
+    apply: async function(target, thisArg, argumentsList) {
+        console.log('argumentsList', argumentsList)
+        return target(...argumentsList)
+    }
+})
+
+
 const handler = {
     apply: async function(target, thisArg, argumentsList) {
         const method = argumentsList[0].method
-        // console.log('method', method)
+        console.log('method', method)
         if (method === "eth_call") {
             const call = argumentsList[0].params[0]
             // console.log("call", call)
@@ -19,7 +27,7 @@ const handler = {
                     to: decodedCall.target,
                     data: decodedCall.callData
                 }))
-                return target(...argumentsList)
+                // return target(...argumentsList)
             }
 
             log(call)
@@ -42,7 +50,7 @@ async function log(call) {
         ? "typical_v3_pool"
         : call.to
 
-    await addToMemory(address)
+    // await addToMemory(address)
     
     if (!memory[address.toLowerCase()]) {
         console.log(`Calling function on address ${address} not in memory right now`)

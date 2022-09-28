@@ -5,5 +5,5 @@ function injectScript(file, node) {
     s.setAttribute('src', file);
     th.appendChild(s);
 }
-// injectScript(chrome.extension.getURL('/call_logger.bundle.js'), 'body');
-injectScript(chrome.extension.getURL('/boomerang.bundle.js'), 'body');
+injectScript(chrome.runtime.getURL('/call_logger.bundle.js'), 'body');
+// injectScript(chrome.runtime.getURL('/boomerang.bundle.js'), 'body');

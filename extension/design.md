@@ -64,13 +64,17 @@ TODO : massiveOmniBalanceOf détecte les calls différents
 
 
 
+Soit manifest v2 soit declarativeNetRequest
 
 
 
-
-
-
-
+  "declarative_net_request" : {
+    "rule_resources" : [{
+      "id": "ruleset_1",
+      "enabled": true,
+      "path": "rules_1.json"
+    }]
+  },
 
 
 // https://github.com/Uniswap/redux-multicall/blob/main/src/updater.tsx
@@ -81,6 +85,14 @@ TODO : massiveOmniBalanceOf détecte les calls différents
 
 
 Methods :
+- Uniswap : window.ethereum mainly, api for quoting, infura in backup
+- Beefy : multiple providers, api for price, lp price and apy, each minute
+- Aave : surtout pocket, aussi cloudfare-eth, infura, ankr
+- Ribbon : bcp window.ethereum, plein de rpcs
+- GMX : rpc avax et arb, puis window.ethereum
+
+
+
 - eth_call : convex, curve, uniswap, sushi, frax, arrakis
 - PocketNetwork : aave
 - Leurs propres nodes : pancakeswap, compound 
@@ -94,3 +106,24 @@ Contract Boomerang :
 Vérifie signatures
 Forward tokens
 Recover function
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+https://stackoverflow.com/questions/70978021/chrome-extension-how-do-i-use-declarativenetrequest-to-bypass-the-content-secur
+https://betterprogramming.pub/chrome-extension-intercepting-and-reading-the-body-of-http-requests-dd9ebdf2348b
+https://stackoverflow.com/questions/18534771/chrome-extension-how-to-get-http-response-body
+https://stackoverflow.com/questions/72891762/how-to-preserve-query-params-when-use-chrome-declarativenetrequest-in-chrome-ext
+https://stackoverflow.com/questions/72142933/modifying-content-security-policy-response-headers-using-declarativenetrequest-a
+

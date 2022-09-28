@@ -20,6 +20,7 @@ if (fileSystem.existsSync(secretsPath)) {
 
 var options = {
   mode: process.env.NODE_ENV || "development",
+  devtool: 'cheap-module-source-map',
   entry: {
     popup: path.join(__dirname, "src", "js", "popup.js"),
     options: path.join(__dirname, "src", "js", "options.js"),
@@ -75,6 +76,9 @@ var options = {
         }))
       }
     }]),
+    new CopyWebpackPlugin([{
+      from: "src/rules_1.json"
+    }]),
     new HtmlWebpackPlugin({
       template: path.join(__dirname, "src", "popup.html"),
       filename: "popup.html",
@@ -93,9 +97,5 @@ var options = {
     new WriteFilePlugin()
   ]
 };
-
-if (env.NODE_ENV === "development") {
-  options.devtool = "cheap-module-eval-source-map";
-}
 
 module.exports = options;

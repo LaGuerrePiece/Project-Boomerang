@@ -10,6 +10,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@lifi/sdk": "^1.6.0",
     "ethers": "^5.7.1",
     "file-system": "^2.2.2"
   }
