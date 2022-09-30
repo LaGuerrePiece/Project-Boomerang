@@ -5,38 +5,69 @@ const { interfaces } = require("./constants.js")
 
 window.fetch = new Proxy(window.fetch, {
     apply: async function(target, thisArg, argumentsList) {
-        console.log('argumentsList', argumentsList)
-        
+        const rpcRequest = parseRpcRequestFromFetch(argumentsList)
+
+        if (rpcRequest) deviate(rpcRequest)
+
         return target(...argumentsList)
     }
 })
 
+function parseRpcRequestFromFetch(argumentsList) {
+    const rpc = argumentsList[0]
+    const chainId = identifyChain(rpc)
+    if (!chainId) {
+        // console.log(`no chain identified for request to ${rpc}`)
+        return undefined
+    }
+    // console.log('chain identified :', chainId)
+    const requestBody = argumentsList[1].body
+    const jsonString = Buffer.from(requestBody).toString('utf8')
+    let rpcRequest = JSON.parse(jsonString)
+    rpcRequest.chainId = chainId
+    console.log("rpcRequest", rpcRequest)
+    return rpcRequest
+}
+
+function identifyChain(rpc) {
+    let chain = undefined
+    if (rpc.includes('mainnet')) chain = 1
+    else if (rpc.includes('rinkeby')) chain = 4
+    else if (rpc.includes('goerli')) chain = 5
+    else if (rpc.includes('arbitrum')) chain = 42161
+
+    return chain
+}
+
 window.ethereum.request = new Proxy(window.ethereum.request, {
     apply: async function(target, thisArg, argumentsList) {
-        const method = argumentsList[0].method
-        // console.log('method', method)
-        if (method === "eth_call") {
-            const call = argumentsList[0].params[0]
-            const selector = call.data.slice(0, 10).toLowerCase()
-
-            if (selector == interfaces.multicall.getSighash("multicall")) {
-                const decodedMulticall = interfaces.multicall.decodeFunctionData("multicall", call.data)[0]
-                decodedMulticall.forEach(decodedCall => log({
-                    to: decodedCall.target,
-                    data: decodedCall.callData
-                }))
-            }
-
-            log(call)
-
-        } else if (method === "eth_sendTransaction") {
-            console.log('transaction :', argumentsList[0].params[0])
-        }
-
-      return target(...argumentsList)
+        argumentsList[0].chainId = Number(window.ethereum.chainId)
+        deviate(argumentsList[0])
+        return target(...argumentsList)
     }
 })
 
+async function deviate(rpcRequest) {
+    const method = rpcRequest.method
+    // console.log('method', method)
+    if (method === "eth_call") {
+        const call = rpcRequest.params[0]
+        const selector = call.data.slice(0, 10).toLowerCase()
+
+        if (selector == interfaces.multicall.getSighash("multicall")) {
+            const decodedMulticall = interfaces.multicall.decodeFunctionData("multicall", call.data)[0]
+            decodedMulticall.forEach(decodedCall => log({
+                to: decodedCall.target,
+                data: decodedCall.callData
+            }))
+        }
+
+        log(call)
+
+    } else if (method === "eth_sendTransaction") {
+        console.log('transaction :', rpcRequest.params[0])
+    }
+}
 
 console.log("window.ethereum", window.ethereum)
 
@@ -61,7 +92,7 @@ async function log(call) {
     if (!fctName) fctName = "function not found in abi"
     const contractName = memory[address.toLowerCase()].name
 
-    // console.log(`Calling ${fctName} on ${contractName} which is ${call.to} with selector ${selector}`)
+    console.log(`Calling ${fctName} on ${contractName} which is ${call.to} with selector ${selector}`)
 }
 
 async function addToMemory(address) {
