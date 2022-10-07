@@ -4,6 +4,7 @@ const { chains, interfaces } = require('./constants.js')
 const { getBlockNumber } = require('./utils')
 
 export async function parseMulticall(tx) {
+    console.log('tx', tx)
     const decodedMulticall = interfaces.multicall.decodeFunctionData("multicall", tx.data)[0]
     console.log("decodedMulticall", decodedMulticall)
 
@@ -30,7 +31,7 @@ export async function parseMulticall(tx) {
                 data: decodedCall.callData
             })
             resultArray[index] = [true, ethers.BigNumber.from("0x1631"), res]
-            if (res == "failed") resultArray[index] = [false, ethers.BigNumber.from("0x1631"), "0x"] //dirty trick for ens resolver failure
+            if (res == "0x") resultArray[index] = [false, ethers.BigNumber.from("0x1631"), "0x"] //dirty trick for failures
         } catch (err) {
             console.log("err", err)
         }

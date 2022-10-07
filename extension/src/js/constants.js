@@ -26,37 +26,48 @@ export const chains = {
         },
         provider: new ethers.providers.JsonRpcProvider("https://mainnet.infura.io/v3/a035e52afe954afe9c45e781080cde98")
     },
-    4: {
-        name: "rinkeby",
-        nativeToken: "ETH",
-        addrs: {
-            MULTICALL: "0x1F98415757620B543A52E61c46B32eB19261F984",
-            WETH: "0xc778417e063141139fce010982780140aa0cd5ab",
-            USDC: "0xeb8f08a975ab53e34d8a0330e0d34de942c95926",
-            DEFAULT: "0x8a75F985D5316B1a98bC11FE5364AbBAd55E1c7A",
-        },
-        provider: new ethers.providers.JsonRpcProvider("https://rinkeby.infura.io/v3/a035e52afe954afe9c45e781080cde98")
-    },
-    5: {
-        name: "goerli",
-        nativeToken: "ETH",
-        addrs: {
-            MULTICALL: "0x1F98415757620B543A52E61c46B32eB19261F984",
-            WETH: "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6",
-            USDC: "0x07865c6e87b9f70255377e024ace6630c1eaa37f",
-            DEFAULT: "0x7af963cf6d228e564e2a0aa0ddbf06210b38615d",
-        },
-        provider: new ethers.providers.JsonRpcProvider("https://goerli.infura.io/v3/a035e52afe954afe9c45e781080cde98")
-    },
+    // 4: {
+    //     name: "rinkeby",
+    //     nativeToken: "ETH",
+    //     addrs: {
+    //         MULTICALL: "0x1F98415757620B543A52E61c46B32eB19261F984",
+    //         WETH: "0xc778417e063141139fce010982780140aa0cd5ab",
+    //         USDC: "0xeb8f08a975ab53e34d8a0330e0d34de942c95926",
+    //         DEFAULT: "0x8a75F985D5316B1a98bC11FE5364AbBAd55E1c7A",
+    //     },
+    //     provider: new ethers.providers.JsonRpcProvider("https://rinkeby.infura.io/v3/a035e52afe954afe9c45e781080cde98")
+    // },
+    // 5: {
+    //     name: "goerli",
+    //     nativeToken: "ETH",
+    //     addrs: {
+    //         MULTICALL: "0x1F98415757620B543A52E61c46B32eB19261F984",
+    //         WETH: "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6",
+    //         USDC: "0x07865c6e87b9f70255377e024ace6630c1eaa37f",
+    //         DEFAULT: "0x7af963cf6d228e564e2a0aa0ddbf06210b38615d",
+    //     },
+    //     provider: new ethers.providers.JsonRpcProvider("https://goerli.infura.io/v3/a035e52afe954afe9c45e781080cde98")
+    // },
     42161: {
         name: "arbitrum",
         nativeToken: "ETH",
         addrs: {
-            MULTICALL: "0x1F98415757620B543A52E61c46B32eB19261F984",
+            MULTICALL: "0xadf885960b47ea2cd9b55e6dac6b42b7cb2806db",
             WETH: "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
             USDC: "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8",
             DEFAULT: "0xb8f9632e8d3cfaf84c254d98aea182a33a9d11bb", //RANDOM TOKEN
         },
-        provider: new ethers.providers.JsonRpcProvider("https://rpc.ankr.com/arbitrum")
+        provider: new ethers.providers.JsonRpcProvider("https://arb1.arbitrum.io/rpc") // or https://1rpc.io/arb
+    },
+    10: {
+        name: "optimism",
+        nativeToken: "ETH",
+        addrs: {
+            MULTICALL: "0x1F98415757620B543A52E61c46B32eB19261F984",
+            WETH: "0x4200000000000000000000000000000000000006",
+            USDC: "0x7f5c764cbc14f9669b88837ca1490cca17c31607",
+            DEFAULT: "0xb12c13e66ade1f72f71834f2fc5082db8c091358", //RANDOM TOKEN
+        },
+        provider: new ethers.providers.JsonRpcProvider("https://mainnet.optimism.io")
     },
 }

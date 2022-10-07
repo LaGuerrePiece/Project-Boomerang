@@ -84,6 +84,7 @@ export async function fetchAbi(addr) {
 export async function batchCall(calls) {
     let responseArray = []
     await Promise.all(calls.map(async (call) => {
+        if (!call.chain) call.chain = Number(window.ethereum.chainId)
         try {
             const res = await chains[call.chain].provider.call({
                 to: call.to,
@@ -106,12 +107,16 @@ export async function batchCall(calls) {
 export async function simpleCall(call) {
     if (!call.chain) call.chain = Number(window.ethereum.chainId)
     try {
-        return await chains[call.chain].provider.call({
+        const res = await chains[call.chain].provider.call({
             to: call.to,
             data: call.data
         })
+
+        return res
     } catch (err) {
         console.log(`Error during call on contract ${call.to} on chain ${call.chain} with data ${call.data}`)
+        console.log('returning 0x')
+        return "0x"
     }
 }
 

@@ -3,64 +3,60 @@
 # Interception des callStatic:
 
 eth_chainId :
-    - TODO : Toujours retourner 1 ?
+    - TODO : Toujours retourner la chainId sur laquelle se passe l'action. Il faut que le gars puisse changer sur le site, mais ça ne fait pas changer dans metamask
 
 eth_blockNumber :
-    - TODO : Toujours le rassurer
+    - TODO : Toujours retourner celui de la chainId de l'action
 
 eth_call :
     - erc-20
         - balanceOf => omniBalanceOf : retourne somme des balanceOf des tokens canoniques sur toutes chaines
+        => Tant que rassemble pas, max(balance)
         - allowance => spoofedAllowance : retourne allowance du user au contrat Boomerang sur la chaîne de la meta-tx
         - nonces => TODO : retourne la nonce du user de ce token sur la chaine de la meta-tx
-        - Deposit (WETH) => TODO
     - multicall :
         - getEthBalance => omniGetEthBalance : retourne getEthBalance + balanceOf des versions wrappées sur toutes chaines
-    - Quoter :
-        - quoteExactOutput => TODO : retourner notre estimation du prix
-        - quoteExactOutputSingle => TODO : retourner notre estimation du prix
-    - Chainlink gas price feed :
-        - latestAnswer => TODO : gasPrice on the chain of the meta-tx ? final fee estimate ? 
-    - v3 pool :
-        - liquidity => TODO
-        - slot0 => TODO
+    <!-- - Quoter :
+        - Rien à changer. Il prend l'amount permis par le balanceOf spoofé, et le modal affichera les tarifs -->
+    <!-- - Chainlink gas price feed :
+        - latestAnswer idem -->
+    <!-- - v3 pool :
+        - liquidity => idem
+        - slot0 => idem
 
+Quand clic sur valider : modal avec chemin puis spoof
 
+Soit spoof le approve directement, soit ne jamais l'afficher puis le faire faire explicitement dans le modal
 
 # Interception des transactions :
 
 eth_sendTransaction:
-    - TODO : Renvoyer une demande de signature d'une meta-tx qui permet à Boomerang de bridger + swapper
+    Ouvrir modal avec infos, simuler tx, l'afficher, puis : {
+        - 2 cas : wrap/unwrap weth and uniswap swap
+        - TODO : Renvoyer une demande de signature d'une meta-tx qui permet à Boomerang de bridger + swapper
+    }
 
 eth_signTypedData_v4 :
-    - TODO : Permit for Boomerang to use user's tokens
+    Si permit : {
+        - TODO : Permit for Boomerang to use user's tokens
+    }
 
-eth_estimateGas :
+<!-- eth_estimateGas : -->
+<!-- eth_accounts : -->
 
-eth_accounts :
+eth_getTransactionByHash : Donner la tx sur la chaine d'arrivée (de l'action)
 
-eth_sendTransaction :
-
-eth_getTransactionByHash :
-
-eth_getTransactionReceipt :
-
+eth_getTransactionReceipt : Donner la tx sur la chaine d'arrivée (de l'action)
 
 
 
 
+Multicall actuellement :
+    - les fait tous en simple
+    - sauf les balanceOf qu'il batch car c'est le seul massif sur uniswap à spoofer
 
-
-
-
-
-
-
-Cas pour multicall :
-    - Tous les faire en simple
-    - En faire certains en simple
-
-TODO : massiveOmniBalanceOf détecte les calls différents
+Cas général :
+    - 
 
 
 
