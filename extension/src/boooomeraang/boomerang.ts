@@ -1,16 +1,10 @@
-declare global {
-    interface Window {
-        ethereum: any;
-    }
-}
-
 import { ethers } from "ethers"
 import { spoof_call, spoof_eth_chainId, spoof_eth_blockNumber } from './spoof'
 import { chains, interfaces } from './constants'
 import { parseMulticall } from './multiParser'
 import { GelatoRelaySDK } from "@gelatonetwork/relay-sdk"
 import { getBlockNumber } from "./utils"
-import { dappChainId, changeDappChainId } from "./constants"
+import { changeDappChainId } from "./constants"
 
 window.ethereum.request = new Proxy(window.ethereum.request, {
   apply: async function(target, thisArg, argumentsList) {
@@ -26,13 +20,13 @@ window.ethereum.request = new Proxy(window.ethereum.request, {
       // console.log("spoofedRes", spoofedRes)
       return spoofedRes
     } else if (method == "eth_chainId") {
-      return spoof_eth_chainId(dappChainId)
+      return spoof_eth_chainId()
     } else if (method == "eth_blockNumber") {
-      return spoof_eth_blockNumber(dappChainId)
+      return spoof_eth_blockNumber()
     } else if (method == "wallet_switchEthereumChain") {
       const newChainId = Number(argumentsList[0].params[0].chainId)
       changeDappChainId(newChainId)
-      console.log('newChainId', newChainId)
+      console.log('newChainId :', newChainId)
       return null
     }
     return target(...argumentsList)

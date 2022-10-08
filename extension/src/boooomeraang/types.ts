@@ -1,5 +1,11 @@
 import { ethers } from "ethers"
 
+declare global {
+    interface Window {
+        ethereum: any;
+    }
+}
+
 export type RpcRequest = {
     chainId: number
     id: number
@@ -39,4 +45,3 @@ export type Chain = {
 }
 
 
-export type a = number

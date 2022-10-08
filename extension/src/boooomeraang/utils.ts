@@ -108,7 +108,6 @@ export async function batchCall(calls: Types.Call[]) {
  */
 export async function simpleCall(call: Types.Call) {
     if (!call.chain) call.chain = dappChainId
-    console.log('dappChainId', dappChainId)
     try {
         const res = await chains[call.chain].provider.call({
             to: call.to,
