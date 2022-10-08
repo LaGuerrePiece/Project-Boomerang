@@ -2,6 +2,7 @@ const { ethers } = require('ethers')
 const { chains } = require('./constants.js')
 const { memory } = require("./memory.js")
 const { uniTokenList } = require("./uni_token_list.js")
+var { dappChainId } = require("./constants.js")
 
 export function getToken(address, chain) {
     const tokenOnThisChain = uniTokenList.tokens.find(token =>
@@ -35,7 +36,6 @@ export function getEquivalentTokens(address, chain) {
     let tokens = uniTokenList.tokens.filter(token => token.symbol == tokenOnThisChain.symbol)
     tokens = tokens.filter(token => chains[token.chainId]) // only keep those on supported chains
     // console.log('tokens', tokens)
-
     return tokens
 }
 
@@ -58,7 +58,7 @@ export function bigMax(array) {
     return ethers.utils.hexZeroPad(max.toHexString(), 32)
 }
 
-export async function fetchAbi(addr) {
+export async function fetchAbi(addr) { // TODO : adapt to chain
     try {
         const res = await fetch(`https://api.etherscan.io/api?module=contract&action=getabi&address=${addr}&apikey=P2FFHY1K8MGSX1Y57S7NSI3JZENKQ6MTU9`)
         if (!res.ok) {
@@ -84,7 +84,7 @@ export async function fetchAbi(addr) {
 export async function batchCall(calls) {
     let responseArray = []
     await Promise.all(calls.map(async (call) => {
-        if (!call.chain) call.chain = Number(window.ethereum.chainId)
+        if (!call.chain) call.chain = dappChainId
         try {
             const res = await chains[call.chain].provider.call({
                 to: call.to,
@@ -105,7 +105,8 @@ export async function batchCall(calls) {
  * @return - returns the result
  */
 export async function simpleCall(call) {
-    if (!call.chain) call.chain = Number(window.ethereum.chainId)
+    if (!call.chain) call.chain = dappChainId
+    console.log('dappChainId', dappChainId)
     try {
         const res = await chains[call.chain].provider.call({
             to: call.to,
@@ -120,7 +121,7 @@ export async function simpleCall(call) {
 }
 
 export async function getBlockNumber(chain) {
-    if (!chain) chain = Number(window.ethereum.chainId)
+    if (!chain) chain = dappChainId
     return ethers.BigNumber.from(await chains[chain].provider.getBlockNumber())
 }
 

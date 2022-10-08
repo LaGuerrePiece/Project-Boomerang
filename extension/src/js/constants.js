@@ -14,6 +14,9 @@ export const interfaces = {
 
 export const boomerangAddress = "0xb362974139f31218bc1faf4be8cfd82c4b4b03a7"
 
+export var dappChainId = Number(window.ethereum.chainId)
+console.log('dappChainId initial', dappChainId)
+
 export const chains = {
     1: {
         name: "mainnet",

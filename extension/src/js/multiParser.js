@@ -1,5 +1,5 @@
 const { ethers } = require("ethers")
-const { spoof, massiveOmniBalanceOf } = require('./spoof.js')
+const { spoof_call, massiveOmniBalanceOf } = require('./spoof.js')
 const { chains, interfaces } = require('./constants.js')
 const { getBlockNumber } = require('./utils')
 
@@ -25,7 +25,7 @@ export async function parseMulticall(tx) {
     let resultArray = []
     await Promise.all(decodedMulticall.map(async (decodedCall, index) => {
         try {
-            const res = await spoof({
+            const res = await spoof_call({
                 to: decodedCall.target,
                 data: decodedCall.callData
             })

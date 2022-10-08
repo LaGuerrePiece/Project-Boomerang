@@ -1,28 +1,43 @@
 const { ethers } = require("ethers")
-const { spoof } = require('./spoof.js')
+const { spoof_call, spoof_eth_chainId, spoof_eth_blockNumber } = require('./spoof.js')
 const { chains, interfaces } = require('./constants.js')
 const { parseMulticall } = require('./multiParser.js')
 const { GelatoRelaySDK } = require("@gelatonetwork/relay-sdk");
+const { getBlockNumber } = require("./utils.js")
+var { dappChainId } = require("./constants.js")
 
 window.ethereum.request = new Proxy(window.ethereum.request, {
   apply: async function(target, thisArg, argumentsList) {
     const method = argumentsList[0].method
-    // console.log('method', method, argumentsList)
+    console.log('method', method, argumentsList)
     if (method === "eth_call") {
       const call = argumentsList[0].params[0]
       const selector = call.data.slice(0, 10).toLowerCase()
       const spoofedRes = (selector == interfaces.multicall.getSighash("multicall"))
         ? await parseMulticall(call)
-        : await spoof(call)
+        : await spoof_call(call)
 
       // console.log("spoofedRes", spoofedRes)
       return spoofedRes
+    } else if (method == "eth_chainId") {
+      return spoof_eth_chainId(dappChainId)
+    } else if (method == "eth_blockNumber") {
+      return spoof_eth_blockNumber(dappChainId)
+    } else if (method == "wallet_switchEthereumChain") {
+      const newChainId = Number(argumentsList[0].params[0].chainId)
+      dappChainId = newChainId
+      console.log('newChainId', newChainId)
+      return null
     }
     return target(...argumentsList)
   }
 })
 
 console.log("window.ethereum", window.ethereum)
+
+
+
+
 
 
 
