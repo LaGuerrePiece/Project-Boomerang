@@ -1,6 +1,7 @@
-const { ethers } = require('ethers')
-const { memory } = require("./memory.js")
-const { uniTokenList } = require("./uni_token_list.js")
+import { ethers } from 'ethers'
+import { memory } from "./memory"
+import { uniTokenList } from "./uni_token_list"
+import * as Types from './types'
 
 const multicallAbi = memory["0x1f98415757620b543a52e61c46b32eb19261f984"].abi
 const erc20Abi = memory["typical_erc20"].abi
@@ -17,7 +18,11 @@ export const boomerangAddress = "0xb362974139f31218bc1faf4be8cfd82c4b4b03a7"
 export var dappChainId = Number(window.ethereum.chainId)
 console.log('dappChainId initial', dappChainId)
 
-export const chains = {
+export function changeDappChainId(newChainId: number) {
+    dappChainId = newChainId
+}
+
+export const chains: { [chainId: number]: Types.Chain} = {
     1: {
         name: "mainnet",
         nativeToken: "ETH",

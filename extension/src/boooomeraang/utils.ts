@@ -1,10 +1,12 @@
-const { ethers } = require('ethers')
-const { chains } = require('./constants.js')
-const { memory } = require("./memory.js")
-const { uniTokenList } = require("./uni_token_list.js")
-var { dappChainId } = require("./constants.js")
+import { ethers } from 'ethers'
+import { chains } from './constants'
+import { memory } from "./memory"
+import { uniTokenList } from "./uni_token_list"
+import { dappChainId } from "./constants"
+import * as Types from './types'
 
-export function getToken(address, chain) {
+
+export function getToken(address: string, chain: number) {
     const tokenOnThisChain = uniTokenList.tokens.find(token =>
         token.chainId == chain
         && token.address.toLowerCase() == address.toLowerCase()
@@ -17,7 +19,7 @@ export function getToken(address, chain) {
 }
 
 // Returns address of a token on another chain
-export function getTokenOnOtherChain(addressOnFirstChain, firstChain, secondChain) {
+export function getTokenOnOtherChain(addressOnFirstChain: string, firstChain: number, secondChain: number) {
     const tokenOnFirstChain = getToken(addressOnFirstChain, firstChain)
     const tokenOnSecondChain = uniTokenList.tokens.find(token =>
         token.chainId == secondChain
@@ -31,7 +33,7 @@ export function getTokenOnOtherChain(addressOnFirstChain, firstChain, secondChai
 }
 
 // Renvoie tous les tokens de même symbole et leur chaine
-export function getEquivalentTokens(address, chain) {
+export function getEquivalentTokens(address: string, chain: number) {
     const tokenOnThisChain = getToken(address, chain)
     let tokens = uniTokenList.tokens.filter(token => token.symbol == tokenOnThisChain.symbol)
     tokens = tokens.filter(token => chains[token.chainId]) // only keep those on supported chains
@@ -39,7 +41,7 @@ export function getEquivalentTokens(address, chain) {
     return tokens
 }
 
-export function bigSum(array) {
+export function bigSum(array: string[]) {
     let sum = ethers.BigNumber.from(0)
     for (const hex of array) {
         sum = sum.add(ethers.BigNumber.from(hex))
@@ -47,7 +49,7 @@ export function bigSum(array) {
     return ethers.utils.hexZeroPad(sum.toHexString(), 32)
 }
 
-export function bigMax(array) {
+export function bigMax(array: string[]) {
     let max = ethers.BigNumber.from(0)
     for (const hex of array) {
         const bn = ethers.BigNumber.from(hex)
@@ -58,7 +60,7 @@ export function bigMax(array) {
     return ethers.utils.hexZeroPad(max.toHexString(), 32)
 }
 
-export async function fetchAbi(addr) { // TODO : adapt to chain
+export async function fetchAbi(addr: string) { // TODO : adapt to chain
     try {
         const res = await fetch(`https://api.etherscan.io/api?module=contract&action=getabi&address=${addr}&apikey=P2FFHY1K8MGSX1Y57S7NSI3JZENKQ6MTU9`)
         if (!res.ok) {
@@ -81,8 +83,8 @@ export async function fetchAbi(addr) { // TODO : adapt to chain
  * @param call - An array of call objects of format {to, data, chain}
  * @return - returns an array of the results
  */
-export async function batchCall(calls) {
-    let responseArray = []
+export async function batchCall(calls: Types.Call[]) {
+    let responseArray: string[] = []
     await Promise.all(calls.map(async (call) => {
         if (!call.chain) call.chain = dappChainId
         try {
@@ -104,7 +106,7 @@ export async function batchCall(calls) {
  * @param call - An call object of format {to, data, chain}
  * @return - returns the result
  */
-export async function simpleCall(call) {
+export async function simpleCall(call: Types.Call) {
     if (!call.chain) call.chain = dappChainId
     console.log('dappChainId', dappChainId)
     try {
@@ -120,7 +122,7 @@ export async function simpleCall(call) {
     }
 }
 
-export async function getBlockNumber(chain) {
+export async function getBlockNumber(chain?: number): Promise<ethers.BigNumber> {
     if (!chain) chain = dappChainId
     return ethers.BigNumber.from(await chains[chain].provider.getBlockNumber())
 }
@@ -134,7 +136,6 @@ async function generateTxData() {
 
     let multicall = new ethers.Contract(UNI_MULTICALL, multicallAbi);
     let erc20 = new ethers.Contract(USDC, erc20Abi);
-    console.log(erc20Iface.getSighash("allowance"))
     console.log("tx", await erc20.populateTransaction.allowance("0x86c01dd169ae6f3523d1919cc46bc224e733127f", "0x7a250d5630b4cf539739df2c5dacb4c659f2488d"))
 }
 

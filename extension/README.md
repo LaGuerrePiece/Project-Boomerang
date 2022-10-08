@@ -1,41 +1,77 @@
-# Chrome Extension Webpack Boilerplate
+<img src="src/assets/img/icon-128.png" width="64"/>
 
-A basic foundation boilerplate for rich Chrome Extensions using [Webpack](https://webpack.github.io/) to help you write modular and modern Javascript code, load CSS easily and [automatic reload the browser on code changes](https://webpack.github.io/docs/webpack-dev-server.html#automatic-refresh).
+# Chrome Extension Boilerplate with React 17 and Webpack 5
 
-## Developing a new extension
-_I'll assume that you already read the [Webpack docs](https://webpack.js.org) and the [Chrome Extension](https://developer.chrome.com/extensions/getstarted) docs._
+[![npm](https://img.shields.io/npm/v/chrome-extension-boilerplate-react)](https://www.npmjs.com/package/chrome-extension-boilerplate-react)
+[![npm-download](https://img.shields.io/npm/dw/chrome-extension-boilerplate-react)](https://www.npmjs.com/package/chrome-extension-boilerplate-react)
+[![npm](https://img.shields.io/npm/dm/chrome-extension-boilerplate-react)](https://www.npmjs.com/package/chrome-extension-boilerplate-react)
 
+[![dependencies Status](https://david-dm.org/lxieyang/chrome-extension-boilerplate-react/status.svg)](https://david-dm.org/lxieyang/chrome-extension-boilerplate-react)
+[![devDependencies Status](https://david-dm.org/lxieyang/chrome-extension-boilerplate-react/dev-status.svg)](https://david-dm.org/lxieyang/chrome-extension-boilerplate-react?type=dev)
 
-1. Check if your Node.js version is >= 6.
-2. Clone the repository.
-3. Install [yarn](https://yarnpkg.com/lang/en/docs/install/).
-4. Run `yarn`.
-5. Change the package's name and description on `package.json`.
-6. Change the name of your extension on `src/manifest.json`.
-7. Run `yarn run start`
-8. Load your extension on Chrome following:
-    1. Access `chrome://extensions/`
-    2. Check `Developer mode`
-    3. Click on `Load unpacked extension`
-    4. Select the `build` folder.
-8. Have fun.
+## Announcements
+
+- **_This boilerplate adopts [Manifest V3](https://developer.chrome.com/docs/extensions/mv3/intro/mv3-overview/)!_** For V2 users, please check out the [manifest-v2](https://github.com/lxieyang/chrome-extension-boilerplate-react/tree/manifest-v2) branch, or use version [3.x](https://www.npmjs.com/package/chrome-extension-boilerplate-react/v/3.3.0).
+  - Check out the [Manifest V3 Migration Guide](https://developer.chrome.com/docs/extensions/mv3/intro/mv3-migration/).
+- Recently added [devtools](https://developer.chrome.com/docs/extensions/mv3/devtools/) Support! Thanks [GeekaholicLin](https://github.com/lxieyang/chrome-extension-boilerplate-react/issues/17)!
+- Recently updated from **[React](https://reactjs.org)** ~~16~~ to **17**!
+- Recently updated from **[Webpack Dev Server](https://webpack.js.org/configuration/dev-server/)** ~~3.x~~ to **4.x** and **[Webpack](https://webpack.js.org/)** ~~4~~ to **5**!
+- Recently added [TypeScript](https://www.typescriptlang.org/) Support!
+
+## Features
+
+This is a basic Chrome Extensions boilerplate to help you write modular and modern Javascript code, load CSS easily and [automatic reload the browser on code changes](https://webpack.github.io/docs/webpack-dev-server.html#automatic-refresh).
+
+This boilerplate is updated with:
+
+- [Chrome Extension Manifest V3](https://developer.chrome.com/docs/extensions/mv3/intro/mv3-overview/)
+- [React 17](https://reactjs.org)
+- [Webpack 5](https://webpack.js.org/)
+- [Webpack Dev Server 4](https://webpack.js.org/configuration/dev-server/)
+- [React Hot Loader](https://github.com/gaearon/react-hot-loader)
+- [eslint-config-react-app](https://www.npmjs.com/package/eslint-config-react-app)
+- [Prettier](https://prettier.io/)
+- [TypeScript](https://www.typescriptlang.org/)
+
+This boilerplate is heavily inspired by and adapted from [https://github.com/samuelsimoes/chrome-extension-webpack-boilerplate](https://github.com/samuelsimoes/chrome-extension-webpack-boilerplate), with additional support for React 17 features, Webpack 5, and Webpack Dev Server 4.
+
+Please open up an issue to nudge me to keep the npm packages up-to-date. FYI, it takes time to make different packages with different versions work together nicely.
+
+## Installing and Running
+
+### Procedures:
+
+1. Check if your [Node.js](https://nodejs.org/) version is >= **14**.
+2. Clone this repository.
+3. Change the package's `name`, `description`, and `repository` fields in `package.json`.
+4. Change the name of your extension on `src/manifest.json`.
+5. Run `npm install` to install the dependencies.
+6. Run `npm start`
+7. Load your extension on Chrome following:
+   1. Access `chrome://extensions/`
+   2. Check `Developer mode`
+   3. Click on `Load unpacked extension`
+   4. Select the `build` folder.
+8. Happy hacking.
 
 ## Structure
-All your extension's development code must be placed in `src` folder, including the extension manifest.
 
-The boilerplate is already prepared to have a popup, a options page and a background page. You can easily customize this.
+All your extension's code must be placed in the `src` folder.
 
-Each page has its own [assets package defined](https://github.com/samuelsimoes/chrome-extension-webpack-boilerplate/blob/master/webpack.config.js#L16-L20). So, to code on popup you must start your code on `src/js/popup.js`, for example.
+The boilerplate is already prepared to have a popup, an options page, a background page, and a new tab page (which replaces the new tab page of your browser). But feel free to customize these.
 
-You must use the [ES6 modules](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import) to a better code organization. The boilerplate is already prepared to that and [here you have a little example](https://github.com/samuelsimoes/chrome-extension-webpack-boilerplate/blob/master/src/js/popup.js#L2-L4).
+## TypeScript
+
+This boilerplate now supports TypeScript! The `Options` Page is implemented using TypeScript. Please refer to `src/pages/Options/` for example usages.
 
 ## Webpack auto-reload and HRM
-To make your workflow much more efficient this boilerplate uses the [webpack server](https://webpack.github.io/docs/webpack-dev-server.html) to development (started with `yarn run server`) with auto reload feature that reloads the browser automatically every time that you save some file o your editor.
+
+To make your workflow much more efficient this boilerplate uses the [webpack server](https://webpack.github.io/docs/webpack-dev-server.html) to development (started with `npm start`) with auto reload feature that reloads the browser automatically every time that you save some file in your editor.
 
 You can run the dev mode on other port if you want. Just specify the env var `port` like this:
 
 ```
-$ PORT=6002 yarn run start
+$ PORT=6002 npm run start
 ```
 
 ## Content Scripts
@@ -68,18 +104,24 @@ and on your `src/manifest.json`:
     }
   ]
 }
-
 ```
 
+## Intelligent Code Completion
+
+Thanks to [@hudidit](https://github.com/lxieyang/chrome-extension-boilerplate-react/issues/4)'s kind suggestions, this boilerplate supports chrome-specific intelligent code completion using [@types/chrome](https://www.npmjs.com/package/@types/chrome).
+
 ## Packing
+
 After the development of your extension run the command
 
 ```
-$ NODE_ENV=production yarn run build
+$ NODE_ENV=production npm run build
 ```
+
 Now, the content of `build` folder will be the extension ready to be submitted to the Chrome Web Store. Just take a look at the [official guide](https://developer.chrome.com/webstore/publish) to more infos about publishing.
 
 ## Secrets
+
 If you are developing an extension that talks with some API you probably are using different keys for testing and production. Is a good practice you not commit your secret keys and expose to anyone that have access to the repository.
 
 To this task this boilerplate import the file `./secrets.<THE-NODE_ENV>.js` on your modules through the module named as `secrets`, so you can do things like this:
@@ -87,27 +129,23 @@ To this task this boilerplate import the file `./secrets.<THE-NODE_ENV>.js` on y
 _./secrets.development.js_
 
 ```js
-export default { key: "123" };
+export default { key: '123' };
 ```
 
 _./src/popup.js_
 
 ```js
-import secrets from "secrets";
+import secrets from 'secrets';
 ApiCall({ key: secrets.key });
 ```
+
 :point_right: The files with name `secrets.*.js` already are ignored on the repository.
 
-## With React.js
-:bulb: If you want use [React.js](https://facebook.github.io/react/) with this boilerplate, check the **[react branch](https://github.com/samuelsimoes/chrome-extension-webpack-boilerplate/tree/react)**.
+## Resources:
 
+- [Webpack documentation](https://webpack.js.org/concepts/)
+- [Chrome Extension documentation](https://developer.chrome.com/extensions/getstarted)
 
-## Contributing
+---
 
-1. **Please!! Do not create a pull request without an issue before discussing the problem.**
-2. On your PR make sure that you are following the current codebase style.
-3. Your PR must be single purpose. Resolve just one problem on your PR.
-4. Make sure to commit in the same style that we are committing until now on the project.
-
--------------
-Samuel Simões ~ [@samuelsimoes](https://twitter.com/samuelsimoes) ~ [Blog](http://blog.samuelsimoes.com/)
+Michael Xieyang Liu | [Website](https://lxieyang.github.io)

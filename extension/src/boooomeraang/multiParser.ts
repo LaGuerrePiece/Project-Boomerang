@@ -1,10 +1,12 @@
-const { ethers } = require("ethers")
-const { spoof_call, massiveOmniBalanceOf } = require('./spoof.js')
-const { chains, interfaces } = require('./constants.js')
-const { getBlockNumber } = require('./utils')
+import { BigNumber, ethers } from "ethers"
+import { spoof_call, massiveOmniBalanceOf } from './spoof'
+import { chains, interfaces } from './constants'
+import { getBlockNumber } from './utils'
+import * as Types from './types'
 
-export async function parseMulticall(tx) {
-    const decodedMulticall = interfaces.multicall.decodeFunctionData("multicall", tx.data)[0]
+
+export async function parseMulticall(tx: Types.Call) {
+    const decodedMulticall: Types.Multicall = interfaces.multicall.decodeFunctionData("multicall", tx.data)[0]
     // console.log("decodedMulticall", decodedMulticall)
 
     // Triage :
@@ -22,8 +24,8 @@ export async function parseMulticall(tx) {
     }
 
     // classic parseMulticall :
-    let resultArray = []
-    await Promise.all(decodedMulticall.map(async (decodedCall, index) => {
+    let resultArray: [boolean, ethers.BigNumber, string][] = []
+    await Promise.all(decodedMulticall.map(async (decodedCall, index: number) => {
         try {
             const res = await spoof_call({
                 to: decodedCall.target,

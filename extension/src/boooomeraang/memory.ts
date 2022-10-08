@@ -1,4 +1,6 @@
-export const memory = {
+import * as Types from './types'
+
+export const memory: Types.Memory = {
     "0x00000000000c2e074ec69a0dfb2997ba6c7d2e1e": {
         "name": "ENS Resolver",
         "abi": [

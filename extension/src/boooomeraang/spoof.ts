@@ -1,14 +1,16 @@
-const { ethers } = require('ethers')
-const { chains, interfaces, boomerangAddress } = require('./constants.js')
-const { getToken, getBlockNumber, getTokenOnOtherChain, getEquivalentTokens, bigSum, bigMax, batchCall, simpleCall } = require('./utils.js')
-var { dappChainId } = require("./constants.js")
+import { ethers } from 'ethers'
+import { chains, interfaces, boomerangAddress } from './constants'
+import { getToken, getBlockNumber, getTokenOnOtherChain, getEquivalentTokens, bigSum, bigMax, batchCall, simpleCall } from './utils'
+import { dappChainId } from "./constants"
+import * as Types from './types'
+
 
 /**
  * @notice - Spoof un eth_call simple
  * @param call - L'objet du call SIMPLE (pas multicall) à faire. Format : {to, data}
  * @return - La valeur de retour spoofée de la fonction
  */
-export async function spoof_call(call) {
+export async function spoof_call(call: Types.Call) {
     const selector = call.data.slice(0, 10).toLowerCase()
     switch (selector) {
         case interfaces.multicall.getSighash("getEthBalance"):
@@ -34,13 +36,13 @@ export async function spoof_call(call) {
  * @param call - The call object of format {to, data}
  * @return - The balance of native token on all supported chains that have the same native token
  */
- async function omniGetEthBalance(call) {
+ async function omniGetEthBalance(call: Types.Call) {
     const currentChain = dappChainId
     console.log('dappChainId in omniGetEthBalance', dappChainId)
     const nativeTokenSymbol = chains[currentChain].nativeToken
-    let chainIds = []
+    let chainIds: number[] = []
     for (const chainId in chains) {
-        if (chains[chainId].nativeToken == nativeTokenSymbol) chainIds.push(chainId)
+        if (chains[chainId].nativeToken == nativeTokenSymbol) chainIds.push(Number(chainId))
     }
 
     let responseArray = await batchCall(chainIds.map(chainId => {
@@ -61,7 +63,7 @@ export async function spoof_call(call) {
  * @param call - The call object of format {to, data}
  * @return - The balance of the user in all canonical versions of the token
  */
-async function omniBalanceOf(call) {
+async function omniBalanceOf(call: Types.Call) {
     const tokenArray = getEquivalentTokens(call.to, dappChainId)
 
     const responseArray = await batchCall(tokenArray.map(tokenData => {
@@ -84,23 +86,23 @@ async function omniBalanceOf(call) {
  * @param call - L'objet décodé du multicall à faire. Format : {target, gasLimit, callData}[]
  * @return - La valeur de retour spoofée de la fonction
  */
-export async function massiveOmniBalanceOf(decodedMulticall) {
+export async function massiveOmniBalanceOf(decodedMulticall: Types.Multicall) {
     const currentChain = dappChainId
     console.log('massive balanceOf. Parsing into individual calls and balanceOf batch...')
 
     decodedMulticall = Object.values(decodedMulticall)
 
-    let shiftedCalls = []
+    let shiftedCalls: Types.Multicall = []
     while (true) {
         const call = decodedMulticall[0];
         if (call.callData.slice(0, 10).toLowerCase() != interfaces.erc20.getSighash("balanceOf")) {
-            shiftedCalls.push(decodedMulticall.shift())
+            shiftedCalls.push(decodedMulticall.shift()!)
         } else break
     }
 
     // console.log('shiftedCalls', shiftedCalls)
 
-    let shiftedCallsResponses = []
+    let shiftedCallsResponses: string[] = []
     await Promise.all(shiftedCalls.map(async (call, index) => {
         try {
             const res = await spoof_call({
@@ -122,7 +124,7 @@ export async function massiveOmniBalanceOf(decodedMulticall) {
     for (const chain in chains) {
         const multicallOnThisChain = decodedMulticall.map((call) => {
             return {
-                target: (getTokenOnOtherChain(call.target, currentChain, chain)).address,
+                target: (getTokenOnOtherChain(call.target, currentChain, Number(chain))).address,
                 gasLimit: call.gasLimit,
                 callData: call.callData
             }
@@ -136,14 +138,14 @@ export async function massiveOmniBalanceOf(decodedMulticall) {
     // console.log('multicalls', multicalls)
     
     // Lance les multicall
-    let responseArray = []
+    let responseArray: {success: boolean, gasUsed: ethers.BigNumber, returnData: string}[][] = []
     await Promise.all(multicalls.map(async ([chain, multicall], index) => {
         try {
             const newData = interfaces.multicall.encodeFunctionData("multicall", [multicall])
             const res = await simpleCall({
                 to: chains[Number(chain)].addrs["MULTICALL"],
                 data: newData,
-                chain: chain
+                chain: Number(chain)
             })
 
             // console.log('res', res)
@@ -154,13 +156,13 @@ export async function massiveOmniBalanceOf(decodedMulticall) {
         }
     }))
     
-    responseArray = responseArray.map(decoded => {
+    const responses = responseArray.map(decoded => {
         return decoded.map(el => el.returnData)
     })
     
-    let tokenBalances = [...Array(responseArray[0].length)].map((_) => [])
+    let tokenBalances: string[][] = [...Array(responses[0].length)].map((_) => [])
     
-    for (const chain of responseArray) {
+    for (const chain of responses) {
         for (let i = 0; i < chain.length; i++) {            
             tokenBalances[i].push(chain[i])
         }
@@ -170,9 +172,9 @@ export async function massiveOmniBalanceOf(decodedMulticall) {
     
     
     sums = shiftedCallsResponses.concat(sums) // add response from earlier calls
-    sums = sums.map(sum => sum === "0x" ? [false, ethers.BigNumber.from("0x1631"), sum] : [true, ethers.BigNumber.from("0x1631"), sum])
+    const formattedSums = sums.map(sum => sum === "0x" ? [false, ethers.BigNumber.from("0x1631"), sum] : [true, ethers.BigNumber.from("0x1631"), sum])
     // console.log('sums final', sums)
-    let responseFull = [await getBlockNumber(currentChain), sums]
+    let responseFull = [await getBlockNumber(currentChain), formattedSums]
     const encodedResponse = ethers.utils.defaultAbiCoder.encode([ "uint256", "tuple(bool, uint256, bytes)[]" ], responseFull)
 
     return encodedResponse
@@ -185,7 +187,7 @@ export async function massiveOmniBalanceOf(decodedMulticall) {
  * TODO : gérer le cas permit
  * Pour l'instant, demande sur chaque chaine, puis retourne l'allowance la plus haute
  */
-async function spoofedAllowance(call) {
+async function spoofedAllowance(call: Types.Call) {
     const tokenArray = getEquivalentTokens(call.to, dappChainId)
 
     const responseArray = await batchCall(tokenArray.map(tokenData => {
@@ -201,12 +203,12 @@ async function spoofedAllowance(call) {
     return bigMax(responseArray)
 }
 
-export function spoof_eth_chainId(dappChainId) {
+export function spoof_eth_chainId(dappChainId: number) {
     console.log('ethers.utils.hexlify(dappChainId)', ethers.utils.hexlify(dappChainId))
     return ethers.utils.hexlify(dappChainId)
 }
   
-export async function spoof_eth_blockNumber(dappChainId) {
+export async function spoof_eth_blockNumber(dappChainId: number) {
     console.log('getBlockNumber(dappChainId)', ethers.utils.hexlify(await getBlockNumber(dappChainId)))
     return ethers.utils.hexlify(await getBlockNumber(dappChainId))
 }
