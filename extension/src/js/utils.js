@@ -114,8 +114,7 @@ export async function simpleCall(call) {
 
         return res
     } catch (err) {
-        console.log(`Error during call on contract ${call.to} on chain ${call.chain} with data ${call.data}`)
-        console.log('returning 0x')
+        console.log(`Error during call on contract ${call.to} on chain ${call.chain} with data ${call.data}, returning 0x`)
         return "0x"
     }
 }

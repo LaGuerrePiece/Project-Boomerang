@@ -4,9 +4,8 @@ const { chains, interfaces } = require('./constants.js')
 const { getBlockNumber } = require('./utils')
 
 export async function parseMulticall(tx) {
-    console.log('tx', tx)
     const decodedMulticall = interfaces.multicall.decodeFunctionData("multicall", tx.data)[0]
-    console.log("decodedMulticall", decodedMulticall)
+    // console.log("decodedMulticall", decodedMulticall)
 
     // Triage :
 
@@ -36,7 +35,7 @@ export async function parseMulticall(tx) {
             console.log("err", err)
         }
     }))
-    console.log('resultArray', resultArray)
+    // console.log('resultArray', resultArray)
     const responseFull = [await getBlockNumber(), resultArray]
 
     const encodedResponse = ethers.utils.defaultAbiCoder.encode([ "uint256", "tuple(bool, uint256, bytes)[]" ], responseFull)

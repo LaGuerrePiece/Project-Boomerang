@@ -6,17 +6,18 @@ const { GelatoRelaySDK } = require("@gelatonetwork/relay-sdk");
 
 window.ethereum.request = new Proxy(window.ethereum.request, {
   apply: async function(target, thisArg, argumentsList) {
-      const method = argumentsList[0].method
-      if (method === "eth_call") {
-          const call = argumentsList[0].params[0]
-          const selector = call.data.slice(0, 10).toLowerCase()
-          const spoofedRes = (selector == interfaces.multicall.getSighash("multicall"))
-                           ? await parseMulticall(call)
-                           : await spoof(call)
+    const method = argumentsList[0].method
+    // console.log('method', method, argumentsList)
+    if (method === "eth_call") {
+      const call = argumentsList[0].params[0]
+      const selector = call.data.slice(0, 10).toLowerCase()
+      const spoofedRes = (selector == interfaces.multicall.getSighash("multicall"))
+        ? await parseMulticall(call)
+        : await spoof(call)
 
-          // console.log("spoofedRes", spoofedRes)
-          return spoofedRes
-      }
+      // console.log("spoofedRes", spoofedRes)
+      return spoofedRes
+    }
     return target(...argumentsList)
   }
 })
