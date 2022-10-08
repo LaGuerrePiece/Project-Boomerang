@@ -3,41 +3,80 @@ import { spoof_call, spoof_eth_chainId, spoof_eth_blockNumber } from './spoof'
 import { chains, interfaces } from './constants'
 import { parseMulticall } from './multiParser'
 import { GelatoRelaySDK } from "@gelatonetwork/relay-sdk"
-import { getBlockNumber } from "./utils"
+import { getBlockNumber, rpcUrlToChainId, parseRpcRequestFromFetch } from "./utils"
 import { changeDappChainId } from "./constants"
+import * as Types from './types'
 
-window.ethereum.request = new Proxy(window.ethereum.request, {
-  apply: async function(target, thisArg, argumentsList) {
-    const method = argumentsList[0].method
-    console.log('method', method, argumentsList)
-    if (method === "eth_call") {
-      const call = argumentsList[0].params[0]
-      const selector = call.data.slice(0, 10).toLowerCase()
-      const spoofedRes = (selector == interfaces.multicall.getSighash("multicall"))
-        ? await parseMulticall(call)
-        : await spoof_call(call)
+async function testa() {
+  console.log('bn :', await chains[1].provider.getBlockNumber())
 
-      // console.log("spoofedRes", spoofedRes)
-      return spoofedRes
-    } else if (method == "eth_chainId") {
-      return spoof_eth_chainId()
-    } else if (method == "eth_blockNumber") {
-      return spoof_eth_blockNumber()
-    } else if (method == "wallet_switchEthereumChain") {
-      const newChainId = Number(argumentsList[0].params[0].chainId)
-      changeDappChainId(newChainId)
-      console.log('newChainId :', newChainId)
-      return null
-    }
+  const res = await fetch("https://mainnet.infura.io/v3/a035e52afe954afe9c45e781080cde98", {
+    "method": "POST",
+    "headers": {
+        "content-type": "application/json",
+        "Content-Length": "61"
+    },
+    "body": new Uint8Array([123,34,109,101,116,104,111,100,34,58,34,101,116,104,95,99,104,97,105,110,73,100,34,44,34,112,97,114,97,109,115,34,58,91,93,44,34,105,100,34,58,49,50,49,44,34,106,115,111,110,114,112,99,34,58,34,50,46,48,34,125]),
+    "mode": "cors",
+    "cache": "no-cache",
+    "credentials": "same-origin",
+    "redirect": "follow",
+    "referrer": "client"
+  })
+  console.log('res from fetch:', res)
+}
+
+testa()
+
+window.fetch = new Proxy(window.fetch, {
+  apply: async function(target, thisArg, argumentsList: [string, Types.fetchRequest?]) {
+    // console.log('argumentsList', argumentsList)
+    // const rpcRequest = parseRpcRequestFromFetch(argumentsList)
+    // console.log('rpcRequest from fetch :', rpcRequest)
+    // if (!rpcRequest) return target(...argumentsList)
+    // const response = await deviate(rpcRequest)
+    // console.log('response', response)
+    // if (response) return response
     return target(...argumentsList)
   }
 })
 
+window.ethereum.request = new Proxy(window.ethereum.request, {
+  apply: async function(target, thisArg, argumentsList) {
+    const result = await deviate(argumentsList[0])
+    if (result) return result
+    else return target(...argumentsList)
+  }
+})
+
+async function deviate(rpcRequest: Types.RpcRequest) {
+  const method = rpcRequest.method
+  console.log('method', method)
+  if (method === "eth_call") {
+    const call = rpcRequest.params[0] as Types.Call
+    const selector = call.data.slice(0, 10).toLowerCase()
+    const spoofedRes = (selector == interfaces.multicall.getSighash("multicall"))
+      ? await parseMulticall(call)
+      : await spoof_call(call)
+
+    // console.log("spoofedRes", spoofedRes)
+    return spoofedRes
+  } else if (method == "eth_chainId") {
+    return spoof_eth_chainId()
+  } else if (method == "eth_blockNumber") {
+    return spoof_eth_blockNumber()
+  } else if (method == "wallet_switchEthereumChain") {
+    const call = rpcRequest.params[0] as Types.SwitchChainCall
+    const newChainId = Number(call.chainId)
+    changeDappChainId(newChainId)
+    console.log('newChainId :', newChainId)
+    return null
+  } else if (method === "eth_sendTransaction") {
+    console.log('transaction :', rpcRequest.params[0])
+  }
+}
+
 console.log("window.ethereum", window.ethereum)
-
-
-
-
 
 
 async function test () {

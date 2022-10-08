@@ -6,6 +6,7 @@ import * as Types from './types'
 
 window.fetch = new Proxy(window.fetch, {
     apply: async function(target: any, thisArg, argumentsList: any) {
+        console.log('argumentsList', argumentsList)
         const rpcRequest = parseRpcRequestFromFetch(argumentsList)
 
         if (rpcRequest) deviate(rpcRequest)
@@ -25,7 +26,7 @@ function parseRpcRequestFromFetch(argumentsList: any) {
     const jsonString = Buffer.from(requestBody).toString('utf8')
     let rpcRequest = JSON.parse(jsonString)
     rpcRequest.chainId = chainId
-    console.log("rpcRequest", rpcRequest)
+    // console.log("rpcRequest", rpcRequest)
     return rpcRequest
 }
 
@@ -51,7 +52,7 @@ async function deviate(rpcRequest: Types.RpcRequest) {
     const method = rpcRequest.method
     // console.log('method', method)
     if (method === "eth_call") {
-        const call = rpcRequest.params[0]!
+        const call = rpcRequest.params[0] as Types.Call
         const selector = call.data.slice(0, 10).toLowerCase()
 
         if (selector == interfaces.multicall.getSighash("multicall")) {

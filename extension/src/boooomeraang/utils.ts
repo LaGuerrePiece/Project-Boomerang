@@ -126,6 +126,29 @@ export async function getBlockNumber(chain?: number): Promise<ethers.BigNumber> 
     return ethers.BigNumber.from(await chains[chain].provider.getBlockNumber())
 }
 
+export function rpcUrlToChainId(rpcUrl: string): number | undefined { //TODO : clean
+    let chainId = undefined
+    if (rpcUrl.includes('mainnet')) chainId = 1
+    else if (rpcUrl.includes('rinkeby')) chainId = 4
+    else if (rpcUrl.includes('goerli')) chainId = 5
+    else if (rpcUrl.includes('arbitrum')) chainId = 42161
+  
+    return chainId
+}
+  
+export function parseRpcRequestFromFetch(argumentsList: [string, Types.fetchRequest?]) {
+    const url = argumentsList[0]
+    const chainId = rpcUrlToChainId(url)
+    if (!chainId) {
+      // console.log(`no chain identified for request to ${rpc}`)
+      return undefined
+    }
+    const requestBody = argumentsList[1]!.body
+    const jsonString = Buffer.from(requestBody).toString('utf8')
+    let rpcRequest = JSON.parse(jsonString)
+    console.log("rpcRequest", rpcRequest)
+    return rpcRequest
+}
 
 async function generateTxData() {
     const UNI_MULTICALL = "0x1f98415757620b543a52e61c46b32eb19261f984"

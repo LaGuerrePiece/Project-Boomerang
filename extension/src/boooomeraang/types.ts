@@ -11,13 +11,16 @@ export type RpcRequest = {
     id: number
     jsonrpc: string
     method: string
-    params : [] | [Call, string]
+    params : [] | [Call | SwitchChainCall, string]
 }
 
 export type Call = {
     to: string
     data: string
     chain? : number
+}
+export type SwitchChainCall = {
+    chainId : string
 }
 
 export type Multicall = {
@@ -44,4 +47,9 @@ export type Chain = {
     provider: ethers.providers.JsonRpcProvider
 }
 
+export type fetchRequest = {
+    body: Uint8Array
+    headers: any
+    methode: string
+}
 
